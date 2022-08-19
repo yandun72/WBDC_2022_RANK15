@@ -1,0 +1,595 @@
+2022-07-27 21:54:16 - INFO - Start
+2022-07-27 21:54:16 - INFO - ==================================================================
+2022-07-27 21:54:16 - INFO - Config - pretrain:
+# Pretrain file num
+PRETRAIN_FILE_NUM = 15
+LOAD_DATA_TYPE = 'mem'#'fluid'
+# Training params
+NUM_FOLDS = 1
+SEED = 42
+# BATCH_SIZE = 128
+BATCH_SIZE = 48
+NUM_EPOCHS = 10
+WARMUP_RATIO = 0.15
+REINIT_LAYER = 0
+WEIGHT_DECAY = 0.01
+LR = {'others':6e-5, 'roberta':6e-5, 'newfc_videoreg':6e-5}
+LR_LAYER_DECAY = 1.0
+# PRETRAIN_TASK = ['tag', 'mlm', 'mfm']
+# mlm
+PRETRAIN_TASK = ['mlm','itm','mfm','itc']
+2022-07-27 21:54:16 - INFO - ==================================================================
+2022-07-27 21:54:16 - INFO - Config - model:
+MODEL_TYPE = 'uni'#'all', 'cross', 'frame', 'bi', 'uni'
+
+MODEL_CONFIG = {
+    'INPUT_SIZE': 1792,
+    'HIDDEN_SIZE': 256,
+    'NUM_CLASSES': 10000,
+    'FEATURE_SIZE': 768,
+    'OUTPUT_SIZE': 1024,
+    'EXPANSION_SIZE': 2,
+    'CLUSTER_SIZE': 64,
+    'NUM_GROUPS': 8,
+    'DROPOUT_PROB': 0.2,
+}
+
+BERT_CFG_DICT = {}
+BERT_CFG_DICT['uni'] = {
+    'hidden_size':768,
+    'num_hidden_layers':6,
+    'num_attention_heads':12,
+    'intermediate_size':3072,
+    'hidden_dropout_prob':0.0,
+    'attention_probs_dropout_prob':0.0
+}
+2022-07-27 21:54:16 - INFO - ==================================================================
+2022-07-27 21:54:16 - INFO - Config - data:
+DATA_PATH = '/chenqs_ms/VX_race_data/'
+BERT_PATH = '/home/tione/notebook/env/baseline/opensource_models/chinese-macbert-base'
+
+DESC = {
+    'tag_id':"int",
+    'id': 'byte',
+    'category_id': 'int',
+    'title': 'byte',
+    'asr_text': 'byte',
+    'frame_feature': 'bytes'
+}
+
+DESC_NOTAG = {
+    'id': 'byte',
+    'title': 'byte',
+    'asr_text': 'byte',
+    'frame_feature': 'bytes'
+}
+2022-07-27 21:54:16 - INFO - Model_type = uni
+2022-07-27 21:54:16 - INFO - ==================================================================
+2022-07-27 21:54:16 - INFO - Load data into memory
+2022-07-27 21:54:16 - INFO - Creating dataset
+2022-07-27 21:54:40 - INFO - ============================训练集的样本数:1100000==================================
+2022-07-27 21:54:40 - INFO - len(train_loader)=22916
+2022-07-27 21:54:40 - INFO - Dataset used memory = 2.8GB
+2022-07-27 21:54:40 - INFO - Total train steps=229166, warmup steps=34374
+2022-07-27 21:54:40 - INFO - Creating model
+2022-07-27 21:54:44 - INFO - ============================bert layer:11下面这些参数的学习率是:5e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.11.attention.self.query.weight', 'roberta.bert.encoder.layer.11.attention.self.key.weight', 'roberta.bert.encoder.layer.11.attention.self.value.weight', 'roberta.bert.encoder.layer.11.attention.output.dense.weight', 'roberta.bert.encoder.layer.11.intermediate.dense.weight', 'roberta.bert.encoder.layer.11.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.11.attention.self.query.bias', 'roberta.bert.encoder.layer.11.attention.self.key.bias', 'roberta.bert.encoder.layer.11.attention.self.value.bias', 'roberta.bert.encoder.layer.11.attention.output.dense.bias', 'roberta.bert.encoder.layer.11.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.11.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.11.intermediate.dense.bias', 'roberta.bert.encoder.layer.11.output.dense.bias', 'roberta.bert.encoder.layer.11.output.LayerNorm.weight', 'roberta.bert.encoder.layer.11.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:10下面这些参数的学习率是:4.75e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.10.attention.self.query.weight', 'roberta.bert.encoder.layer.10.attention.self.key.weight', 'roberta.bert.encoder.layer.10.attention.self.value.weight', 'roberta.bert.encoder.layer.10.attention.output.dense.weight', 'roberta.bert.encoder.layer.10.intermediate.dense.weight', 'roberta.bert.encoder.layer.10.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.10.attention.self.query.bias', 'roberta.bert.encoder.layer.10.attention.self.key.bias', 'roberta.bert.encoder.layer.10.attention.self.value.bias', 'roberta.bert.encoder.layer.10.attention.output.dense.bias', 'roberta.bert.encoder.layer.10.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.10.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.10.intermediate.dense.bias', 'roberta.bert.encoder.layer.10.output.dense.bias', 'roberta.bert.encoder.layer.10.output.LayerNorm.weight', 'roberta.bert.encoder.layer.10.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:9下面这些参数的学习率是:4.5125e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.9.attention.self.query.weight', 'roberta.bert.encoder.layer.9.attention.self.key.weight', 'roberta.bert.encoder.layer.9.attention.self.value.weight', 'roberta.bert.encoder.layer.9.attention.output.dense.weight', 'roberta.bert.encoder.layer.9.intermediate.dense.weight', 'roberta.bert.encoder.layer.9.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.9.attention.self.query.bias', 'roberta.bert.encoder.layer.9.attention.self.key.bias', 'roberta.bert.encoder.layer.9.attention.self.value.bias', 'roberta.bert.encoder.layer.9.attention.output.dense.bias', 'roberta.bert.encoder.layer.9.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.9.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.9.intermediate.dense.bias', 'roberta.bert.encoder.layer.9.output.dense.bias', 'roberta.bert.encoder.layer.9.output.LayerNorm.weight', 'roberta.bert.encoder.layer.9.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:8下面这些参数的学习率是:4.2868749999999995e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.8.attention.self.query.weight', 'roberta.bert.encoder.layer.8.attention.self.key.weight', 'roberta.bert.encoder.layer.8.attention.self.value.weight', 'roberta.bert.encoder.layer.8.attention.output.dense.weight', 'roberta.bert.encoder.layer.8.intermediate.dense.weight', 'roberta.bert.encoder.layer.8.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.8.attention.self.query.bias', 'roberta.bert.encoder.layer.8.attention.self.key.bias', 'roberta.bert.encoder.layer.8.attention.self.value.bias', 'roberta.bert.encoder.layer.8.attention.output.dense.bias', 'roberta.bert.encoder.layer.8.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.8.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.8.intermediate.dense.bias', 'roberta.bert.encoder.layer.8.output.dense.bias', 'roberta.bert.encoder.layer.8.output.LayerNorm.weight', 'roberta.bert.encoder.layer.8.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:7下面这些参数的学习率是:4.07253125e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.7.attention.self.query.weight', 'roberta.bert.encoder.layer.7.attention.self.key.weight', 'roberta.bert.encoder.layer.7.attention.self.value.weight', 'roberta.bert.encoder.layer.7.attention.output.dense.weight', 'roberta.bert.encoder.layer.7.intermediate.dense.weight', 'roberta.bert.encoder.layer.7.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.7.attention.self.query.bias', 'roberta.bert.encoder.layer.7.attention.self.key.bias', 'roberta.bert.encoder.layer.7.attention.self.value.bias', 'roberta.bert.encoder.layer.7.attention.output.dense.bias', 'roberta.bert.encoder.layer.7.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.7.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.7.intermediate.dense.bias', 'roberta.bert.encoder.layer.7.output.dense.bias', 'roberta.bert.encoder.layer.7.output.LayerNorm.weight', 'roberta.bert.encoder.layer.7.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:6下面这些参数的学习率是:3.8689046875e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.6.attention.self.query.weight', 'roberta.bert.encoder.layer.6.attention.self.key.weight', 'roberta.bert.encoder.layer.6.attention.self.value.weight', 'roberta.bert.encoder.layer.6.attention.output.dense.weight', 'roberta.bert.encoder.layer.6.intermediate.dense.weight', 'roberta.bert.encoder.layer.6.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.6.attention.self.query.bias', 'roberta.bert.encoder.layer.6.attention.self.key.bias', 'roberta.bert.encoder.layer.6.attention.self.value.bias', 'roberta.bert.encoder.layer.6.attention.output.dense.bias', 'roberta.bert.encoder.layer.6.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.6.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.6.intermediate.dense.bias', 'roberta.bert.encoder.layer.6.output.dense.bias', 'roberta.bert.encoder.layer.6.output.LayerNorm.weight', 'roberta.bert.encoder.layer.6.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:5下面这些参数的学习率是:3.675459453124999e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.5.attention.self.query.weight', 'roberta.bert.encoder.layer.5.attention.self.key.weight', 'roberta.bert.encoder.layer.5.attention.self.value.weight', 'roberta.bert.encoder.layer.5.attention.output.dense.weight', 'roberta.bert.encoder.layer.5.intermediate.dense.weight', 'roberta.bert.encoder.layer.5.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.5.attention.self.query.bias', 'roberta.bert.encoder.layer.5.attention.self.key.bias', 'roberta.bert.encoder.layer.5.attention.self.value.bias', 'roberta.bert.encoder.layer.5.attention.output.dense.bias', 'roberta.bert.encoder.layer.5.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.5.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.5.intermediate.dense.bias', 'roberta.bert.encoder.layer.5.output.dense.bias', 'roberta.bert.encoder.layer.5.output.LayerNorm.weight', 'roberta.bert.encoder.layer.5.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:4下面这些参数的学习率是:3.4916864804687486e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.4.attention.self.query.weight', 'roberta.bert.encoder.layer.4.attention.self.key.weight', 'roberta.bert.encoder.layer.4.attention.self.value.weight', 'roberta.bert.encoder.layer.4.attention.output.dense.weight', 'roberta.bert.encoder.layer.4.intermediate.dense.weight', 'roberta.bert.encoder.layer.4.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.4.attention.self.query.bias', 'roberta.bert.encoder.layer.4.attention.self.key.bias', 'roberta.bert.encoder.layer.4.attention.self.value.bias', 'roberta.bert.encoder.layer.4.attention.output.dense.bias', 'roberta.bert.encoder.layer.4.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.4.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.4.intermediate.dense.bias', 'roberta.bert.encoder.layer.4.output.dense.bias', 'roberta.bert.encoder.layer.4.output.LayerNorm.weight', 'roberta.bert.encoder.layer.4.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:3下面这些参数的学习率是:3.3171021564453116e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.3.attention.self.query.weight', 'roberta.bert.encoder.layer.3.attention.self.key.weight', 'roberta.bert.encoder.layer.3.attention.self.value.weight', 'roberta.bert.encoder.layer.3.attention.output.dense.weight', 'roberta.bert.encoder.layer.3.intermediate.dense.weight', 'roberta.bert.encoder.layer.3.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.3.attention.self.query.bias', 'roberta.bert.encoder.layer.3.attention.self.key.bias', 'roberta.bert.encoder.layer.3.attention.self.value.bias', 'roberta.bert.encoder.layer.3.attention.output.dense.bias', 'roberta.bert.encoder.layer.3.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.3.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.3.intermediate.dense.bias', 'roberta.bert.encoder.layer.3.output.dense.bias', 'roberta.bert.encoder.layer.3.output.LayerNorm.weight', 'roberta.bert.encoder.layer.3.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:2下面这些参数的学习率是:3.151247048623045e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.2.attention.self.query.weight', 'roberta.bert.encoder.layer.2.attention.self.key.weight', 'roberta.bert.encoder.layer.2.attention.self.value.weight', 'roberta.bert.encoder.layer.2.attention.output.dense.weight', 'roberta.bert.encoder.layer.2.intermediate.dense.weight', 'roberta.bert.encoder.layer.2.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.2.attention.self.query.bias', 'roberta.bert.encoder.layer.2.attention.self.key.bias', 'roberta.bert.encoder.layer.2.attention.self.value.bias', 'roberta.bert.encoder.layer.2.attention.output.dense.bias', 'roberta.bert.encoder.layer.2.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.2.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.2.intermediate.dense.bias', 'roberta.bert.encoder.layer.2.output.dense.bias', 'roberta.bert.encoder.layer.2.output.LayerNorm.weight', 'roberta.bert.encoder.layer.2.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:1下面这些参数的学习率是:2.993684696191893e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.1.attention.self.query.weight', 'roberta.bert.encoder.layer.1.attention.self.key.weight', 'roberta.bert.encoder.layer.1.attention.self.value.weight', 'roberta.bert.encoder.layer.1.attention.output.dense.weight', 'roberta.bert.encoder.layer.1.intermediate.dense.weight', 'roberta.bert.encoder.layer.1.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.1.attention.self.query.bias', 'roberta.bert.encoder.layer.1.attention.self.key.bias', 'roberta.bert.encoder.layer.1.attention.self.value.bias', 'roberta.bert.encoder.layer.1.attention.output.dense.bias', 'roberta.bert.encoder.layer.1.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.1.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.1.intermediate.dense.bias', 'roberta.bert.encoder.layer.1.output.dense.bias', 'roberta.bert.encoder.layer.1.output.LayerNorm.weight', 'roberta.bert.encoder.layer.1.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - ============================bert layer:0下面这些参数的学习率是:2.844000461382298e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.0.attention.self.query.weight', 'roberta.bert.encoder.layer.0.attention.self.key.weight', 'roberta.bert.encoder.layer.0.attention.self.value.weight', 'roberta.bert.encoder.layer.0.attention.output.dense.weight', 'roberta.bert.encoder.layer.0.intermediate.dense.weight', 'roberta.bert.encoder.layer.0.output.dense.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.encoder.layer.0.attention.self.query.bias', 'roberta.bert.encoder.layer.0.attention.self.key.bias', 'roberta.bert.encoder.layer.0.attention.self.value.bias', 'roberta.bert.encoder.layer.0.attention.output.dense.bias', 'roberta.bert.encoder.layer.0.attention.output.LayerNorm.weight', 'roberta.bert.encoder.layer.0.attention.output.LayerNorm.bias', 'roberta.bert.encoder.layer.0.intermediate.dense.bias', 'roberta.bert.encoder.layer.0.output.dense.bias', 'roberta.bert.encoder.layer.0.output.LayerNorm.weight', 'roberta.bert.encoder.layer.0.output.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - 
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    
+2022-07-27 21:54:44 - INFO - ============================bert embedding下面这些参数的学习率是:2.701800438313183e-05
+2022-07-27 21:54:44 - INFO - ['roberta.bert.embeddings.word_embeddings.weight', 'roberta.bert.embeddings.position_embeddings.weight', 'roberta.bert.embeddings.token_type_embeddings.weight', 'roberta.bert.video_embeddings.word_embeddings.weight', 'roberta.bert.video_embeddings.position_embeddings.weight', 'roberta.bert.video_embeddings.token_type_embeddings.weight']
+2022-07-27 21:54:44 - INFO - ['roberta.bert.embeddings.LayerNorm.weight', 'roberta.bert.embeddings.LayerNorm.bias', 'roberta.bert.video_embeddings.LayerNorm.weight', 'roberta.bert.video_embeddings.LayerNorm.bias']
+2022-07-27 21:54:44 - INFO - 
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    
+2022-07-27 21:54:44 - INFO - ============================itm mfm下面这些参数的学习率是:5e-05
+2022-07-27 21:54:44 - INFO - ['newfc_itm.weight', 'itc_visual_projection.weight', 'itc_text_projection.weight']
+2022-07-27 21:54:44 - INFO - ['newfc_itm.bias']
+2022-07-27 21:54:44 - INFO - =====================参数不在我们的分组有=====================
+2022-07-27 21:54:44 - INFO - {'newfc_hidden.weight', 'roberta.cls.predictions.transform.LayerNorm.weight', 'roberta.bert.video_fc.weight', 'roberta.cls.predictions.transform.LayerNorm.bias', 'roberta.cls.predictions.transform.dense.bias', 'roberta.cls.predictions.transform.dense.weight', 'newfc_hidden.bias', 'roberta.cls.predictions.bias', 'roberta.bert.video_fc_2.weight', 'roberta.cls.predictions.decoder.weight', 'roberta.bert.video_fc_2.bias', 'roberta.bert.video_fc.bias'}
+2022-07-27 21:54:44 - INFO - ===================他们的学习率将设为默认的5e-05=========================
+2022-07-27 21:54:44 - INFO - total step=229160	 one epoch step=22916
+2022-07-27 21:58:09 - INFO - Epoch=1/10 	 step=499 	 total_loss= 6.375,itm_loss=0.6998,mlm_loss= 2.499,itc_loss= 3.176,lr[0]=7.258392971431897e-07
+2022-07-27 22:01:22 - INFO - Epoch=1/10 	 step=999 	 total_loss= 6.276,itm_loss= 0.697,mlm_loss= 2.404,itc_loss= 3.176,lr[0]=1.4531331820562053e-06
+2022-07-27 22:04:36 - INFO - Epoch=1/10 	 step=1499 	 total_loss= 6.193,itm_loss=0.6935,mlm_loss= 2.324,itc_loss= 3.175,lr[0]=2.180427066969221e-06
+2022-07-27 22:07:50 - INFO - Epoch=1/10 	 step=1999 	 total_loss= 6.126,itm_loss= 0.689,mlm_loss= 2.266,itc_loss= 3.171,lr[0]=2.907720951882237e-06
+2022-07-27 22:11:03 - INFO - Epoch=1/10 	 step=2499 	 total_loss=  6.07,itm_loss=0.6828,mlm_loss= 2.222,itc_loss= 3.165,lr[0]=3.6350148367952525e-06
+2022-07-27 22:14:17 - INFO - Epoch=1/10 	 step=2999 	 total_loss=  6.02,itm_loss=0.6755,mlm_loss= 2.185,itc_loss=  3.16,lr[0]=4.362308721708268e-06
+2022-07-27 22:17:31 - INFO - Epoch=1/10 	 step=3499 	 total_loss= 5.972,itm_loss=0.6655,mlm_loss= 2.151,itc_loss= 3.155,lr[0]=5.089602606621284e-06
+2022-07-27 22:20:45 - INFO - Epoch=1/10 	 step=3999 	 total_loss= 5.932,itm_loss=0.6549,mlm_loss= 2.126,itc_loss= 3.151,lr[0]=5.816896491534299e-06
+2022-07-27 22:23:58 - INFO - Epoch=1/10 	 step=4499 	 total_loss= 5.896,itm_loss=0.6445,mlm_loss= 2.103,itc_loss= 3.148,lr[0]=6.544190376447315e-06
+2022-07-27 22:27:12 - INFO - Epoch=1/10 	 step=4999 	 total_loss= 5.863,itm_loss=0.6349,mlm_loss= 2.083,itc_loss= 3.145,lr[0]=7.271484261360331e-06
+2022-07-27 22:30:25 - INFO - Epoch=1/10 	 step=5499 	 total_loss= 5.834,itm_loss=0.6259,mlm_loss= 2.065,itc_loss= 3.143,lr[0]=7.998778146273346e-06
+2022-07-27 22:33:39 - INFO - Epoch=1/10 	 step=5999 	 total_loss= 5.807,itm_loss=0.6167,mlm_loss=  2.05,itc_loss= 3.141,lr[0]=8.726072031186362e-06
+2022-07-27 22:36:53 - INFO - Epoch=1/10 	 step=6499 	 total_loss= 5.784,itm_loss=0.6083,mlm_loss= 2.036,itc_loss= 3.139,lr[0]=9.453365916099378e-06
+2022-07-27 22:40:06 - INFO - Epoch=1/10 	 step=6999 	 total_loss=  5.76,itm_loss=0.5985,mlm_loss= 2.023,itc_loss= 3.138,lr[0]=1.0180659801012394e-05
+2022-07-27 22:43:20 - INFO - Epoch=1/10 	 step=7499 	 total_loss= 5.738,itm_loss=0.5893,mlm_loss= 2.012,itc_loss= 3.137,lr[0]=1.090795368592541e-05
+2022-07-27 22:46:34 - INFO - Epoch=1/10 	 step=7999 	 total_loss= 5.717,itm_loss=0.5796,mlm_loss= 2.002,itc_loss= 3.135,lr[0]=1.1635247570838424e-05
+2022-07-27 22:49:48 - INFO - Epoch=1/10 	 step=8499 	 total_loss= 5.697,itm_loss=0.5702,mlm_loss= 1.992,itc_loss= 3.134,lr[0]=1.236254145575144e-05
+2022-07-27 22:53:02 - INFO - Epoch=1/10 	 step=8999 	 total_loss= 5.679,itm_loss= 0.561,mlm_loss= 1.985,itc_loss= 3.133,lr[0]=1.3089835340664454e-05
+2022-07-27 22:56:16 - INFO - Epoch=1/10 	 step=9499 	 total_loss= 5.661,itm_loss=0.5518,mlm_loss= 1.976,itc_loss= 3.132,lr[0]=1.3817129225577472e-05
+2022-07-27 22:59:29 - INFO - Epoch=1/10 	 step=9999 	 total_loss= 5.644,itm_loss=0.5435,mlm_loss= 1.969,itc_loss= 3.132,lr[0]=1.4544423110490488e-05
+2022-07-27 23:02:43 - INFO - Epoch=1/10 	 step=10499 	 total_loss= 5.627,itm_loss=0.5349,mlm_loss= 1.961,itc_loss= 3.131,lr[0]=1.5271716995403503e-05
+2022-07-27 23:05:57 - INFO - Epoch=1/10 	 step=10999 	 total_loss= 5.611,itm_loss=0.5271,mlm_loss= 1.954,itc_loss=  3.13,lr[0]=1.599901088031652e-05
+2022-07-27 23:09:10 - INFO - Epoch=1/10 	 step=11499 	 total_loss= 5.596,itm_loss=0.5195,mlm_loss= 1.947,itc_loss= 3.129,lr[0]=1.6726304765229535e-05
+2022-07-27 23:12:24 - INFO - Epoch=1/10 	 step=11999 	 total_loss= 5.582,itm_loss=0.5122,mlm_loss= 1.941,itc_loss= 3.129,lr[0]=1.745359865014255e-05
+2022-07-27 23:15:38 - INFO - Epoch=1/10 	 step=12499 	 total_loss= 5.569,itm_loss=0.5053,mlm_loss= 1.935,itc_loss= 3.128,lr[0]=1.8180892535055567e-05
+2022-07-27 23:18:52 - INFO - Epoch=1/10 	 step=12999 	 total_loss= 5.556,itm_loss=0.4986,mlm_loss=  1.93,itc_loss= 3.128,lr[0]=1.8908186419968583e-05
+2022-07-27 23:22:05 - INFO - Epoch=1/10 	 step=13499 	 total_loss= 5.545,itm_loss= 0.493,mlm_loss= 1.925,itc_loss= 3.127,lr[0]=1.96354803048816e-05
+2022-07-27 23:25:18 - INFO - Epoch=1/10 	 step=13999 	 total_loss= 5.533,itm_loss=0.4868,mlm_loss= 1.919,itc_loss= 3.127,lr[0]=2.0362774189794615e-05
+2022-07-27 23:28:32 - INFO - Epoch=1/10 	 step=14499 	 total_loss= 5.523,itm_loss=0.4812,mlm_loss= 1.915,itc_loss= 3.126,lr[0]=2.1090068074707627e-05
+2022-07-27 23:31:46 - INFO - Epoch=1/10 	 step=14999 	 total_loss= 5.512,itm_loss=0.4757,mlm_loss=  1.91,itc_loss= 3.126,lr[0]=2.1817361959620643e-05
+2022-07-27 23:35:00 - INFO - Epoch=1/10 	 step=15499 	 total_loss= 5.503,itm_loss=0.4707,mlm_loss= 1.906,itc_loss= 3.126,lr[0]=2.254465584453366e-05
+2022-07-27 23:38:13 - INFO - Epoch=1/10 	 step=15999 	 total_loss= 5.493,itm_loss=0.4654,mlm_loss= 1.902,itc_loss= 3.125,lr[0]=2.3271949729446675e-05
+2022-07-27 23:41:27 - INFO - Epoch=1/10 	 step=16499 	 total_loss= 5.484,itm_loss=0.4607,mlm_loss= 1.898,itc_loss= 3.125,lr[0]=2.399924361435969e-05
+2022-07-27 23:44:41 - INFO - Epoch=1/10 	 step=16999 	 total_loss= 5.475,itm_loss=0.4562,mlm_loss= 1.894,itc_loss= 3.124,lr[0]=2.4726537499272707e-05
+2022-07-27 23:47:55 - INFO - Epoch=1/10 	 step=17499 	 total_loss= 5.466,itm_loss=0.4518,mlm_loss=  1.89,itc_loss= 3.124,lr[0]=2.5453831384185723e-05
+2022-07-27 23:51:08 - INFO - Epoch=1/10 	 step=17999 	 total_loss= 5.458,itm_loss=0.4474,mlm_loss= 1.886,itc_loss= 3.124,lr[0]=2.618112526909874e-05
+2022-07-27 23:54:22 - INFO - Epoch=1/10 	 step=18499 	 total_loss=  5.45,itm_loss=0.4434,mlm_loss= 1.883,itc_loss= 3.124,lr[0]=2.6908419154011756e-05
+2022-07-27 23:57:36 - INFO - Epoch=1/10 	 step=18999 	 total_loss= 5.443,itm_loss=0.4393,mlm_loss=  1.88,itc_loss= 3.123,lr[0]=2.763571303892477e-05
+2022-07-28 00:00:49 - INFO - Epoch=1/10 	 step=19499 	 total_loss= 5.436,itm_loss=0.4357,mlm_loss= 1.877,itc_loss= 3.123,lr[0]=2.8363006923837788e-05
+2022-07-28 00:04:03 - INFO - Epoch=1/10 	 step=19999 	 total_loss= 5.429,itm_loss=0.4319,mlm_loss= 1.874,itc_loss= 3.123,lr[0]=2.9090300808750804e-05
+2022-07-28 00:07:17 - INFO - Epoch=1/10 	 step=20499 	 total_loss= 5.423,itm_loss=0.4284,mlm_loss= 1.872,itc_loss= 3.123,lr[0]=2.981759469366382e-05
+2022-07-28 00:10:30 - INFO - Epoch=1/10 	 step=20999 	 total_loss= 5.416,itm_loss=0.4252,mlm_loss= 1.869,itc_loss= 3.122,lr[0]=3.054488857857683e-05
+2022-07-28 00:13:44 - INFO - Epoch=1/10 	 step=21499 	 total_loss=  5.41,itm_loss= 0.422,mlm_loss= 1.866,itc_loss= 3.122,lr[0]=3.127218246348985e-05
+2022-07-28 00:16:58 - INFO - Epoch=1/10 	 step=21999 	 total_loss= 5.404,itm_loss=0.4188,mlm_loss= 1.863,itc_loss= 3.122,lr[0]=3.1999476348402864e-05
+2022-07-28 00:20:12 - INFO - Epoch=1/10 	 step=22499 	 total_loss= 5.398,itm_loss=0.4157,mlm_loss= 1.861,itc_loss= 3.122,lr[0]=3.272677023331588e-05
+2022-07-28 00:23:48 - INFO - Epoch=2/10 	 step=22999 	 total_loss= 5.161,itm_loss=0.2921,mlm_loss= 1.756,itc_loss= 3.113,lr[0]=3.3454064118228896e-05
+2022-07-28 00:27:01 - INFO - Epoch=2/10 	 step=23499 	 total_loss= 5.145,itm_loss= 0.281,mlm_loss= 1.751,itc_loss= 3.113,lr[0]=3.418135800314191e-05
+2022-07-28 00:30:15 - INFO - Epoch=2/10 	 step=23999 	 total_loss= 5.142,itm_loss= 0.281,mlm_loss= 1.748,itc_loss= 3.113,lr[0]=3.490865188805493e-05
+2022-07-28 00:33:29 - INFO - Epoch=2/10 	 step=24499 	 total_loss= 5.141,itm_loss=0.2797,mlm_loss= 1.749,itc_loss= 3.113,lr[0]=3.5635945772967944e-05
+2022-07-28 00:36:43 - INFO - Epoch=2/10 	 step=24999 	 total_loss= 5.137,itm_loss=0.2775,mlm_loss= 1.747,itc_loss= 3.113,lr[0]=3.636323965788096e-05
+2022-07-28 00:39:57 - INFO - Epoch=2/10 	 step=25499 	 total_loss= 5.136,itm_loss=0.2771,mlm_loss= 1.746,itc_loss= 3.113,lr[0]=3.7090533542793976e-05
+2022-07-28 00:43:11 - INFO - Epoch=2/10 	 step=25999 	 total_loss= 5.136,itm_loss=0.2768,mlm_loss= 1.747,itc_loss= 3.113,lr[0]=3.781782742770699e-05
+2022-07-28 00:46:24 - INFO - Epoch=2/10 	 step=26499 	 total_loss= 5.133,itm_loss=0.2757,mlm_loss= 1.744,itc_loss= 3.113,lr[0]=3.854512131262e-05
+2022-07-28 00:49:38 - INFO - Epoch=2/10 	 step=26999 	 total_loss= 5.134,itm_loss=0.2758,mlm_loss= 1.746,itc_loss= 3.113,lr[0]=3.927241519753302e-05
+2022-07-28 00:52:51 - INFO - Epoch=2/10 	 step=27499 	 total_loss= 5.133,itm_loss= 0.275,mlm_loss= 1.746,itc_loss= 3.113,lr[0]=3.9999709082446034e-05
+2022-07-28 00:56:05 - INFO - Epoch=2/10 	 step=27999 	 total_loss= 5.133,itm_loss=0.2758,mlm_loss= 1.744,itc_loss= 3.113,lr[0]=4.072700296735905e-05
+2022-07-28 00:59:18 - INFO - Epoch=2/10 	 step=28499 	 total_loss= 5.133,itm_loss=0.2755,mlm_loss= 1.745,itc_loss= 3.113,lr[0]=4.1454296852272066e-05
+2022-07-28 01:02:32 - INFO - Epoch=2/10 	 step=28999 	 total_loss= 5.131,itm_loss=0.2746,mlm_loss= 1.744,itc_loss= 3.113,lr[0]=4.218159073718508e-05
+2022-07-28 01:05:46 - INFO - Epoch=2/10 	 step=29499 	 total_loss=  5.13,itm_loss=0.2747,mlm_loss= 1.742,itc_loss= 3.113,lr[0]=4.29088846220981e-05
+2022-07-28 01:08:59 - INFO - Epoch=2/10 	 step=29999 	 total_loss= 5.129,itm_loss=0.2737,mlm_loss= 1.742,itc_loss= 3.113,lr[0]=4.3636178507011114e-05
+2022-07-28 01:12:13 - INFO - Epoch=2/10 	 step=30499 	 total_loss= 5.129,itm_loss= 0.273,mlm_loss= 1.743,itc_loss= 3.113,lr[0]=4.436347239192413e-05
+2022-07-28 01:15:26 - INFO - Epoch=2/10 	 step=30999 	 total_loss= 5.127,itm_loss=0.2724,mlm_loss= 1.742,itc_loss= 3.113,lr[0]=4.5090766276837146e-05
+2022-07-28 01:18:40 - INFO - Epoch=2/10 	 step=31499 	 total_loss= 5.125,itm_loss=0.2717,mlm_loss= 1.741,itc_loss= 3.113,lr[0]=4.581806016175016e-05
+2022-07-28 01:21:53 - INFO - Epoch=2/10 	 step=31999 	 total_loss= 5.125,itm_loss=0.2712,mlm_loss= 1.741,itc_loss= 3.113,lr[0]=4.654535404666318e-05
+2022-07-28 01:25:07 - INFO - Epoch=2/10 	 step=32499 	 total_loss= 5.125,itm_loss=0.2708,mlm_loss= 1.741,itc_loss= 3.113,lr[0]=4.7272647931576194e-05
+2022-07-28 01:28:20 - INFO - Epoch=2/10 	 step=32999 	 total_loss= 5.125,itm_loss=0.2702,mlm_loss= 1.742,itc_loss= 3.113,lr[0]=4.799994181648921e-05
+2022-07-28 01:31:34 - INFO - Epoch=2/10 	 step=33499 	 total_loss= 5.123,itm_loss=0.2697,mlm_loss= 1.741,itc_loss= 3.113,lr[0]=4.8727235701402226e-05
+2022-07-28 01:34:47 - INFO - Epoch=2/10 	 step=33999 	 total_loss= 5.122,itm_loss=0.2695,mlm_loss=  1.74,itc_loss= 3.113,lr[0]=4.945452958631524e-05
+2022-07-28 01:38:01 - INFO - Epoch=2/10 	 step=34499 	 total_loss= 5.122,itm_loss=0.2689,mlm_loss= 1.741,itc_loss= 3.113,lr[0]=4.999994919409887e-05
+2022-07-28 01:41:15 - INFO - Epoch=2/10 	 step=34999 	 total_loss= 5.121,itm_loss=0.2685,mlm_loss= 1.739,itc_loss= 3.113,lr[0]=4.999872986279667e-05
+2022-07-28 01:44:28 - INFO - Epoch=2/10 	 step=35499 	 total_loss=  5.12,itm_loss=0.2681,mlm_loss= 1.739,itc_loss= 3.113,lr[0]=4.999588483351684e-05
+2022-07-28 01:47:42 - INFO - Epoch=2/10 	 step=35999 	 total_loss= 5.119,itm_loss= 0.268,mlm_loss= 1.739,itc_loss= 3.113,lr[0]=4.999141429127508e-05
+2022-07-28 01:50:55 - INFO - Epoch=2/10 	 step=36499 	 total_loss= 5.118,itm_loss=0.2674,mlm_loss= 1.738,itc_loss= 3.113,lr[0]=4.9985318526796265e-05
+2022-07-28 01:54:09 - INFO - Epoch=2/10 	 step=36999 	 total_loss= 5.118,itm_loss= 0.267,mlm_loss= 1.738,itc_loss= 3.113,lr[0]=4.997759793649538e-05
+2022-07-28 01:57:22 - INFO - Epoch=2/10 	 step=37499 	 total_loss= 5.118,itm_loss=0.2666,mlm_loss= 1.739,itc_loss= 3.113,lr[0]=4.9968253022451874e-05
+2022-07-28 02:00:36 - INFO - Epoch=2/10 	 step=37999 	 total_loss= 5.118,itm_loss=0.2663,mlm_loss= 1.739,itc_loss= 3.112,lr[0]=4.995728439237693e-05
+2022-07-28 02:03:49 - INFO - Epoch=2/10 	 step=38499 	 total_loss= 5.117,itm_loss=0.2661,mlm_loss= 1.738,itc_loss= 3.112,lr[0]=4.994469275957397e-05
+2022-07-28 02:07:03 - INFO - Epoch=2/10 	 step=38999 	 total_loss= 5.116,itm_loss=0.2656,mlm_loss= 1.738,itc_loss= 3.112,lr[0]=4.993047894289228e-05
+2022-07-28 02:10:17 - INFO - Epoch=2/10 	 step=39499 	 total_loss= 5.115,itm_loss=0.2652,mlm_loss= 1.738,itc_loss= 3.112,lr[0]=4.9914643866673746e-05
+2022-07-28 02:13:30 - INFO - Epoch=2/10 	 step=39999 	 total_loss= 5.114,itm_loss=0.2646,mlm_loss= 1.737,itc_loss= 3.112,lr[0]=4.989718856069275e-05
+2022-07-28 02:16:44 - INFO - Epoch=2/10 	 step=40499 	 total_loss= 5.113,itm_loss= 0.264,mlm_loss= 1.737,itc_loss= 3.112,lr[0]=4.987811416008917e-05
+2022-07-28 02:19:57 - INFO - Epoch=2/10 	 step=40999 	 total_loss= 5.113,itm_loss=0.2635,mlm_loss= 1.737,itc_loss= 3.112,lr[0]=4.985742190529462e-05
+2022-07-28 02:23:11 - INFO - Epoch=2/10 	 step=41499 	 total_loss= 5.112,itm_loss=0.2629,mlm_loss= 1.737,itc_loss= 3.112,lr[0]=4.9835113141951726e-05
+2022-07-28 02:26:25 - INFO - Epoch=2/10 	 step=41999 	 total_loss= 5.111,itm_loss=0.2624,mlm_loss= 1.736,itc_loss= 3.112,lr[0]=4.981118932082667e-05
+2022-07-28 02:29:38 - INFO - Epoch=2/10 	 step=42499 	 total_loss=  5.11,itm_loss=0.2618,mlm_loss= 1.736,itc_loss= 3.112,lr[0]=4.9785651997714775e-05
+2022-07-28 02:32:52 - INFO - Epoch=2/10 	 step=42999 	 total_loss= 5.109,itm_loss=0.2612,mlm_loss= 1.735,itc_loss= 3.112,lr[0]=4.975850283333941e-05
+2022-07-28 02:36:05 - INFO - Epoch=2/10 	 step=43499 	 total_loss= 5.108,itm_loss=0.2607,mlm_loss= 1.735,itc_loss= 3.112,lr[0]=4.972974359324396e-05
+2022-07-28 02:39:19 - INFO - Epoch=2/10 	 step=43999 	 total_loss= 5.107,itm_loss=0.2603,mlm_loss= 1.734,itc_loss= 3.112,lr[0]=4.969937614767694e-05
+2022-07-28 02:42:32 - INFO - Epoch=2/10 	 step=44499 	 total_loss= 5.106,itm_loss=0.2598,mlm_loss= 1.733,itc_loss= 3.112,lr[0]=4.966740247147051e-05
+2022-07-28 02:45:46 - INFO - Epoch=2/10 	 step=44999 	 total_loss= 5.105,itm_loss=0.2593,mlm_loss= 1.733,itc_loss= 3.112,lr[0]=4.963382464391192e-05
+2022-07-28 02:48:59 - INFO - Epoch=2/10 	 step=45499 	 total_loss= 5.104,itm_loss=0.2589,mlm_loss= 1.733,itc_loss= 3.112,lr[0]=4.959864484860837e-05
+2022-07-28 02:52:34 - INFO - Epoch=3/10 	 step=45999 	 total_loss= 5.056,itm_loss=0.2294,mlm_loss= 1.715,itc_loss= 3.112,lr[0]=4.956186537334498e-05
+2022-07-28 02:55:47 - INFO - Epoch=3/10 	 step=46499 	 total_loss= 5.045,itm_loss=0.2319,mlm_loss= 1.701,itc_loss= 3.112,lr[0]=4.9523488609936e-05
+2022-07-28 02:59:01 - INFO - Epoch=3/10 	 step=46999 	 total_loss= 5.046,itm_loss=0.2295,mlm_loss= 1.704,itc_loss= 3.112,lr[0]=4.94835170540693e-05
+2022-07-28 03:02:14 - INFO - Epoch=3/10 	 step=47499 	 total_loss= 5.048,itm_loss= 0.231,mlm_loss= 1.706,itc_loss= 3.112,lr[0]=4.944195330514404e-05
+2022-07-28 03:05:28 - INFO - Epoch=3/10 	 step=47999 	 total_loss= 5.049,itm_loss=0.2317,mlm_loss= 1.705,itc_loss= 3.112,lr[0]=4.939880006610165e-05
+2022-07-28 03:08:42 - INFO - Epoch=3/10 	 step=48499 	 total_loss= 5.049,itm_loss=0.2309,mlm_loss= 1.706,itc_loss= 3.112,lr[0]=4.9354060143250035e-05
+2022-07-28 03:11:55 - INFO - Epoch=3/10 	 step=48999 	 total_loss= 5.049,itm_loss=0.2325,mlm_loss= 1.705,itc_loss= 3.112,lr[0]=4.930773644608111e-05
+2022-07-28 03:15:09 - INFO - Epoch=3/10 	 step=49499 	 total_loss= 5.047,itm_loss=0.2315,mlm_loss= 1.704,itc_loss= 3.112,lr[0]=4.925983198708155e-05
+2022-07-28 03:18:22 - INFO - Epoch=3/10 	 step=49999 	 total_loss= 5.046,itm_loss= 0.231,mlm_loss= 1.703,itc_loss= 3.112,lr[0]=4.921034988153691e-05
+2022-07-28 03:21:36 - INFO - Epoch=3/10 	 step=50499 	 total_loss= 5.045,itm_loss=0.2301,mlm_loss= 1.703,itc_loss= 3.112,lr[0]=4.915929334732904e-05
+2022-07-28 03:24:49 - INFO - Epoch=3/10 	 step=50999 	 total_loss= 5.046,itm_loss=0.2307,mlm_loss= 1.703,itc_loss= 3.112,lr[0]=4.9106665704726804e-05
+2022-07-28 03:28:03 - INFO - Epoch=3/10 	 step=51499 	 total_loss= 5.043,itm_loss=0.2305,mlm_loss= 1.701,itc_loss= 3.112,lr[0]=4.905247037617017e-05
+2022-07-28 03:31:16 - INFO - Epoch=3/10 	 step=51999 	 total_loss= 5.042,itm_loss=0.2305,mlm_loss=   1.7,itc_loss= 3.112,lr[0]=4.899671088604762e-05
+2022-07-28 03:34:29 - INFO - Epoch=3/10 	 step=52499 	 total_loss= 5.041,itm_loss=0.2301,mlm_loss= 1.699,itc_loss= 3.112,lr[0]=4.893939086046702e-05
+2022-07-28 03:37:43 - INFO - Epoch=3/10 	 step=52999 	 total_loss= 5.041,itm_loss=0.2295,mlm_loss= 1.699,itc_loss= 3.112,lr[0]=4.888051402701971e-05
+2022-07-28 03:40:56 - INFO - Epoch=3/10 	 step=53499 	 total_loss=  5.04,itm_loss=0.2291,mlm_loss= 1.699,itc_loss= 3.112,lr[0]=4.8820084214538206e-05
+2022-07-28 03:44:10 - INFO - Epoch=3/10 	 step=53999 	 total_loss= 5.039,itm_loss= 0.229,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.8758105352847095e-05
+2022-07-28 03:47:24 - INFO - Epoch=3/10 	 step=54499 	 total_loss=  5.04,itm_loss=0.2291,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.869458147250757e-05
+2022-07-28 03:50:37 - INFO - Epoch=3/10 	 step=54999 	 total_loss= 5.039,itm_loss=0.2284,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.862951670455527e-05
+2022-07-28 03:53:50 - INFO - Epoch=3/10 	 step=55499 	 total_loss= 5.038,itm_loss=0.2284,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.8562915280231625e-05
+2022-07-28 03:57:04 - INFO - Epoch=3/10 	 step=55999 	 total_loss= 5.038,itm_loss=0.2278,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.849478153070871e-05
+2022-07-28 04:00:17 - INFO - Epoch=3/10 	 step=56499 	 total_loss= 5.038,itm_loss=0.2275,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.842511988680759e-05
+2022-07-28 04:03:31 - INFO - Epoch=3/10 	 step=56999 	 total_loss= 5.037,itm_loss=0.2271,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.8353934878710175e-05
+2022-07-28 04:06:45 - INFO - Epoch=3/10 	 step=57499 	 total_loss= 5.037,itm_loss= 0.227,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.82812311356646e-05
+2022-07-28 04:09:58 - INFO - Epoch=3/10 	 step=57999 	 total_loss= 5.037,itm_loss=0.2264,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.820701338568418e-05
+2022-07-28 04:13:12 - INFO - Epoch=3/10 	 step=58499 	 total_loss= 5.036,itm_loss=0.2265,mlm_loss= 1.698,itc_loss= 3.112,lr[0]=4.813128645523999e-05
+2022-07-28 04:16:25 - INFO - Epoch=3/10 	 step=58999 	 total_loss= 5.035,itm_loss= 0.226,mlm_loss= 1.697,itc_loss= 3.112,lr[0]=4.805405526894693e-05
+2022-07-28 04:19:38 - INFO - Epoch=3/10 	 step=59499 	 total_loss= 5.035,itm_loss= 0.226,mlm_loss= 1.697,itc_loss= 3.112,lr[0]=4.79753248492435e-05
+2022-07-28 04:22:52 - INFO - Epoch=3/10 	 step=59999 	 total_loss= 5.034,itm_loss=0.2259,mlm_loss= 1.696,itc_loss= 3.112,lr[0]=4.7895100316065176e-05
+2022-07-28 04:26:05 - INFO - Epoch=3/10 	 step=60499 	 total_loss= 5.033,itm_loss=0.2258,mlm_loss= 1.696,itc_loss= 3.112,lr[0]=4.781338688651148e-05
+2022-07-28 04:29:19 - INFO - Epoch=3/10 	 step=60999 	 total_loss= 5.033,itm_loss=0.2256,mlm_loss= 1.696,itc_loss= 3.112,lr[0]=4.7730189874506673e-05
+2022-07-28 04:32:32 - INFO - Epoch=3/10 	 step=61499 	 total_loss= 5.033,itm_loss=0.2256,mlm_loss= 1.695,itc_loss= 3.112,lr[0]=4.76455146904542e-05
+2022-07-28 04:35:46 - INFO - Epoch=3/10 	 step=61999 	 total_loss= 5.033,itm_loss=0.2256,mlm_loss= 1.695,itc_loss= 3.112,lr[0]=4.755936684088485e-05
+2022-07-28 04:38:59 - INFO - Epoch=3/10 	 step=62499 	 total_loss= 5.033,itm_loss=0.2256,mlm_loss= 1.695,itc_loss= 3.112,lr[0]=4.7471751928098616e-05
+2022-07-28 04:42:13 - INFO - Epoch=3/10 	 step=62999 	 total_loss= 5.032,itm_loss=0.2252,mlm_loss= 1.695,itc_loss= 3.112,lr[0]=4.738267564980046e-05
+2022-07-28 04:45:26 - INFO - Epoch=3/10 	 step=63499 	 total_loss= 5.031,itm_loss=0.2249,mlm_loss= 1.695,itc_loss= 3.112,lr[0]=4.729214379872969e-05
+2022-07-28 04:48:39 - INFO - Epoch=3/10 	 step=63999 	 total_loss= 5.031,itm_loss=0.2248,mlm_loss= 1.695,itc_loss= 3.112,lr[0]=4.7200162262283324e-05
+2022-07-28 04:51:53 - INFO - Epoch=3/10 	 step=64499 	 total_loss= 5.031,itm_loss=0.2247,mlm_loss= 1.694,itc_loss= 3.112,lr[0]=4.710673702213315e-05
+2022-07-28 04:55:06 - INFO - Epoch=3/10 	 step=64999 	 total_loss= 5.031,itm_loss=0.2247,mlm_loss= 1.694,itc_loss= 3.112,lr[0]=4.7011874153836815e-05
+2022-07-28 04:58:20 - INFO - Epoch=3/10 	 step=65499 	 total_loss=  5.03,itm_loss=0.2245,mlm_loss= 1.694,itc_loss= 3.112,lr[0]=4.6915579826442665e-05
+2022-07-28 05:01:34 - INFO - Epoch=3/10 	 step=65999 	 total_loss= 5.029,itm_loss=0.2241,mlm_loss= 1.693,itc_loss= 3.112,lr[0]=4.6817860302088576e-05
+2022-07-28 05:04:47 - INFO - Epoch=3/10 	 step=66499 	 total_loss= 5.029,itm_loss= 0.224,mlm_loss= 1.693,itc_loss= 3.112,lr[0]=4.671872193559474e-05
+2022-07-28 05:08:00 - INFO - Epoch=3/10 	 step=66999 	 total_loss= 5.028,itm_loss=0.2238,mlm_loss= 1.693,itc_loss= 3.112,lr[0]=4.6618171174050384e-05
+2022-07-28 05:11:14 - INFO - Epoch=3/10 	 step=67499 	 total_loss= 5.028,itm_loss=0.2237,mlm_loss= 1.693,itc_loss= 3.112,lr[0]=4.651621455639451e-05
+2022-07-28 05:14:27 - INFO - Epoch=3/10 	 step=67999 	 total_loss= 5.028,itm_loss=0.2234,mlm_loss= 1.692,itc_loss= 3.112,lr[0]=4.641285871299064e-05
+2022-07-28 05:17:40 - INFO - Epoch=3/10 	 step=68499 	 total_loss= 5.027,itm_loss=0.2233,mlm_loss= 1.691,itc_loss= 3.112,lr[0]=4.63081103651957e-05
+2022-07-28 05:21:16 - INFO - Epoch=4/10 	 step=68999 	 total_loss= 4.961,itm_loss=0.2094,mlm_loss=  1.64,itc_loss= 3.112,lr[0]=4.6201976324922865e-05
+2022-07-28 05:24:29 - INFO - Epoch=4/10 	 step=69499 	 total_loss=  4.98,itm_loss=0.2095,mlm_loss= 1.658,itc_loss= 3.112,lr[0]=4.6094463494198564e-05
+2022-07-28 05:27:43 - INFO - Epoch=4/10 	 step=69999 	 total_loss= 4.975,itm_loss=0.2052,mlm_loss= 1.658,itc_loss= 3.112,lr[0]=4.598557886471368e-05
+2022-07-28 05:30:56 - INFO - Epoch=4/10 	 step=70499 	 total_loss= 4.981,itm_loss=0.2052,mlm_loss= 1.664,itc_loss= 3.112,lr[0]=4.587532951736884e-05
+2022-07-28 05:34:09 - INFO - Epoch=4/10 	 step=70999 	 total_loss= 4.986,itm_loss=0.2063,mlm_loss= 1.668,itc_loss= 3.112,lr[0]=4.5763722621813945e-05
+2022-07-28 05:37:23 - INFO - Epoch=4/10 	 step=71499 	 total_loss= 4.986,itm_loss=0.2059,mlm_loss= 1.668,itc_loss= 3.112,lr[0]=4.56507654359819e-05
+2022-07-28 05:40:36 - INFO - Epoch=4/10 	 step=71999 	 total_loss= 4.987,itm_loss=0.2059,mlm_loss=  1.67,itc_loss= 3.112,lr[0]=4.553646530561667e-05
+2022-07-28 05:43:50 - INFO - Epoch=4/10 	 step=72499 	 total_loss= 4.987,itm_loss=0.2059,mlm_loss=  1.67,itc_loss= 3.112,lr[0]=4.542082966379552e-05
+2022-07-28 05:47:03 - INFO - Epoch=4/10 	 step=72999 	 total_loss= 4.989,itm_loss=0.2055,mlm_loss= 1.672,itc_loss= 3.112,lr[0]=4.530386603044566e-05
+2022-07-28 05:50:16 - INFO - Epoch=4/10 	 step=73499 	 total_loss= 4.988,itm_loss=0.2056,mlm_loss= 1.671,itc_loss= 3.112,lr[0]=4.518558201185523e-05
+2022-07-28 05:53:30 - INFO - Epoch=4/10 	 step=73999 	 total_loss= 4.987,itm_loss=0.2063,mlm_loss= 1.669,itc_loss= 3.112,lr[0]=4.506598530017863e-05
+2022-07-28 05:56:43 - INFO - Epoch=4/10 	 step=74499 	 total_loss= 4.986,itm_loss=0.2055,mlm_loss= 1.669,itc_loss= 3.112,lr[0]=4.494508367293626e-05
+2022-07-28 05:59:57 - INFO - Epoch=4/10 	 step=74999 	 total_loss= 4.985,itm_loss=0.2052,mlm_loss= 1.668,itc_loss= 3.112,lr[0]=4.482288499250885e-05
+2022-07-28 06:03:11 - INFO - Epoch=4/10 	 step=75499 	 total_loss= 4.984,itm_loss=0.2055,mlm_loss= 1.667,itc_loss= 3.112,lr[0]=4.4699397205626016e-05
+2022-07-28 06:06:24 - INFO - Epoch=4/10 	 step=75999 	 total_loss= 4.983,itm_loss= 0.205,mlm_loss= 1.666,itc_loss= 3.112,lr[0]=4.457462834284957e-05
+2022-07-28 06:09:38 - INFO - Epoch=4/10 	 step=76499 	 total_loss= 4.982,itm_loss=0.2051,mlm_loss= 1.665,itc_loss= 3.112,lr[0]=4.4448586518051275e-05
+2022-07-28 06:12:51 - INFO - Epoch=4/10 	 step=76999 	 total_loss= 4.981,itm_loss=0.2046,mlm_loss= 1.665,itc_loss= 3.112,lr[0]=4.4321279927885144e-05
+2022-07-28 06:16:05 - INFO - Epoch=4/10 	 step=77499 	 total_loss= 4.981,itm_loss=0.2046,mlm_loss= 1.665,itc_loss= 3.112,lr[0]=4.4192716851254436e-05
+2022-07-28 06:19:18 - INFO - Epoch=4/10 	 step=77999 	 total_loss= 4.981,itm_loss=0.2047,mlm_loss= 1.665,itc_loss= 3.112,lr[0]=4.4062905648773266e-05
+2022-07-28 06:22:31 - INFO - Epoch=4/10 	 step=78499 	 total_loss= 4.981,itm_loss=0.2045,mlm_loss= 1.665,itc_loss= 3.112,lr[0]=4.393185476222289e-05
+2022-07-28 06:25:45 - INFO - Epoch=4/10 	 step=78999 	 total_loss=  4.98,itm_loss=0.2046,mlm_loss= 1.664,itc_loss= 3.112,lr[0]=4.3799572714002754e-05
+2022-07-28 06:28:59 - INFO - Epoch=4/10 	 step=79499 	 total_loss= 4.979,itm_loss=0.2043,mlm_loss= 1.663,itc_loss= 3.112,lr[0]=4.366606810657623e-05
+2022-07-28 06:32:12 - INFO - Epoch=4/10 	 step=79999 	 total_loss= 4.979,itm_loss=0.2044,mlm_loss= 1.663,itc_loss= 3.112,lr[0]=4.353134962191122e-05
+2022-07-28 06:35:26 - INFO - Epoch=4/10 	 step=80499 	 total_loss= 4.978,itm_loss=0.2041,mlm_loss= 1.662,itc_loss= 3.112,lr[0]=4.339542602091557e-05
+2022-07-28 06:38:39 - INFO - Epoch=4/10 	 step=80999 	 total_loss= 4.978,itm_loss=0.2041,mlm_loss= 1.662,itc_loss= 3.112,lr[0]=4.325830614286727e-05
+2022-07-28 06:41:52 - INFO - Epoch=4/10 	 step=81499 	 total_loss= 4.977,itm_loss= 0.204,mlm_loss= 1.661,itc_loss= 3.112,lr[0]=4.3119998904839695e-05
+2022-07-28 06:45:06 - INFO - Epoch=4/10 	 step=81999 	 total_loss= 4.976,itm_loss=0.2038,mlm_loss= 1.661,itc_loss= 3.112,lr[0]=4.2980513301121705e-05
+2022-07-28 06:48:20 - INFO - Epoch=4/10 	 step=82499 	 total_loss= 4.976,itm_loss=0.2039,mlm_loss=  1.66,itc_loss= 3.112,lr[0]=4.28398584026327e-05
+2022-07-28 06:51:33 - INFO - Epoch=4/10 	 step=82999 	 total_loss= 4.976,itm_loss=0.2039,mlm_loss=  1.66,itc_loss= 3.112,lr[0]=4.269804335633276e-05
+2022-07-28 06:54:47 - INFO - Epoch=4/10 	 step=83499 	 total_loss= 4.975,itm_loss=0.2037,mlm_loss=  1.66,itc_loss= 3.112,lr[0]=4.255507738462779e-05
+2022-07-28 06:58:00 - INFO - Epoch=4/10 	 step=83999 	 total_loss= 4.975,itm_loss=0.2036,mlm_loss=  1.66,itc_loss= 3.112,lr[0]=4.241096978476977e-05
+2022-07-28 07:01:14 - INFO - Epoch=4/10 	 step=84499 	 total_loss= 4.974,itm_loss=0.2033,mlm_loss= 1.659,itc_loss= 3.112,lr[0]=4.2265729928252196e-05
+2022-07-28 07:04:27 - INFO - Epoch=4/10 	 step=84999 	 total_loss= 4.974,itm_loss=0.2032,mlm_loss= 1.659,itc_loss= 3.112,lr[0]=4.211936726020056e-05
+2022-07-28 07:07:41 - INFO - Epoch=4/10 	 step=85499 	 total_loss= 4.973,itm_loss=0.2031,mlm_loss= 1.659,itc_loss= 3.112,lr[0]=4.197189129875817e-05
+2022-07-28 07:10:54 - INFO - Epoch=4/10 	 step=85999 	 total_loss= 4.973,itm_loss=0.2027,mlm_loss= 1.658,itc_loss= 3.112,lr[0]=4.1823311634467176e-05
+2022-07-28 07:14:08 - INFO - Epoch=4/10 	 step=86499 	 total_loss= 4.972,itm_loss=0.2023,mlm_loss= 1.658,itc_loss= 3.112,lr[0]=4.167363792964486e-05
+2022-07-28 07:17:21 - INFO - Epoch=4/10 	 step=86999 	 total_loss= 4.972,itm_loss=0.2021,mlm_loss= 1.658,itc_loss= 3.112,lr[0]=4.152287991775531e-05
+2022-07-28 07:20:35 - INFO - Epoch=4/10 	 step=87499 	 total_loss= 4.971,itm_loss=0.2018,mlm_loss= 1.658,itc_loss= 3.112,lr[0]=4.137104740277642e-05
+2022-07-28 07:23:48 - INFO - Epoch=4/10 	 step=87999 	 total_loss= 4.971,itm_loss=0.2017,mlm_loss= 1.657,itc_loss= 3.112,lr[0]=4.121815025856235e-05
+2022-07-28 07:27:02 - INFO - Epoch=4/10 	 step=88499 	 total_loss=  4.97,itm_loss=0.2016,mlm_loss= 1.657,itc_loss= 3.112,lr[0]=4.1064198428201366e-05
+2022-07-28 07:30:15 - INFO - Epoch=4/10 	 step=88999 	 total_loss=  4.97,itm_loss=0.2015,mlm_loss= 1.657,itc_loss= 3.112,lr[0]=4.090920192336931e-05
+2022-07-28 07:33:29 - INFO - Epoch=4/10 	 step=89499 	 total_loss= 4.969,itm_loss=0.2012,mlm_loss= 1.656,itc_loss= 3.112,lr[0]=4.0753170823678446e-05
+2022-07-28 07:36:42 - INFO - Epoch=4/10 	 step=89999 	 total_loss= 4.969,itm_loss=0.2011,mlm_loss= 1.656,itc_loss= 3.112,lr[0]=4.059611527602202e-05
+2022-07-28 07:39:56 - INFO - Epoch=4/10 	 step=90499 	 total_loss= 4.969,itm_loss=0.2009,mlm_loss= 1.656,itc_loss= 3.112,lr[0]=4.043804549391438e-05
+2022-07-28 07:43:09 - INFO - Epoch=4/10 	 step=90999 	 total_loss= 4.969,itm_loss=0.2008,mlm_loss= 1.656,itc_loss= 3.112,lr[0]=4.0278971756826804e-05
+2022-07-28 07:46:22 - INFO - Epoch=4/10 	 step=91499 	 total_loss= 4.969,itm_loss=0.2007,mlm_loss= 1.656,itc_loss= 3.112,lr[0]=4.0118904409518947e-05
+2022-07-28 07:49:58 - INFO - Epoch=5/10 	 step=91999 	 total_loss= 4.943,itm_loss= 0.182,mlm_loss= 1.649,itc_loss= 3.112,lr[0]=3.995785386136619e-05
+2022-07-28 07:53:12 - INFO - Epoch=5/10 	 step=92499 	 total_loss= 4.938,itm_loss=0.1883,mlm_loss= 1.638,itc_loss= 3.112,lr[0]=3.979583058568264e-05
+2022-07-28 07:56:25 - INFO - Epoch=5/10 	 step=92999 	 total_loss= 4.931,itm_loss=0.1871,mlm_loss= 1.632,itc_loss= 3.112,lr[0]=3.963284511904009e-05
+2022-07-28 07:59:39 - INFO - Epoch=5/10 	 step=93499 	 total_loss= 4.933,itm_loss=0.1891,mlm_loss= 1.633,itc_loss= 3.112,lr[0]=3.946890806058276e-05
+2022-07-28 08:02:52 - INFO - Epoch=5/10 	 step=93999 	 total_loss= 4.932,itm_loss=  0.19,mlm_loss= 1.631,itc_loss= 3.112,lr[0]=3.930403007133807e-05
+2022-07-28 08:06:06 - INFO - Epoch=5/10 	 step=94499 	 total_loss= 4.935,itm_loss=0.1905,mlm_loss= 1.633,itc_loss= 3.112,lr[0]=3.9138221873523315e-05
+2022-07-28 08:09:19 - INFO - Epoch=5/10 	 step=94999 	 total_loss= 4.934,itm_loss=0.1907,mlm_loss= 1.632,itc_loss= 3.112,lr[0]=3.8971494249848395e-05
+2022-07-28 08:12:32 - INFO - Epoch=5/10 	 step=95499 	 total_loss= 4.933,itm_loss=0.1897,mlm_loss= 1.632,itc_loss= 3.112,lr[0]=3.880385804281459e-05
+2022-07-28 08:15:46 - INFO - Epoch=5/10 	 step=95999 	 total_loss= 4.935,itm_loss=0.1895,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.863532415400947e-05
+2022-07-28 08:18:59 - INFO - Epoch=5/10 	 step=96499 	 total_loss= 4.935,itm_loss=0.1898,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.846590354339795e-05
+2022-07-28 08:22:13 - INFO - Epoch=5/10 	 step=96999 	 total_loss= 4.936,itm_loss=0.1904,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.829560722860955e-05
+2022-07-28 08:25:26 - INFO - Epoch=5/10 	 step=97499 	 total_loss= 4.935,itm_loss=  0.19,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.8124446284221895e-05
+2022-07-28 08:28:40 - INFO - Epoch=5/10 	 step=97999 	 total_loss= 4.935,itm_loss=0.1892,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.795243184104054e-05
+2022-07-28 08:31:54 - INFO - Epoch=5/10 	 step=98499 	 total_loss= 4.935,itm_loss= 0.189,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.7779575085375105e-05
+2022-07-28 08:35:07 - INFO - Epoch=5/10 	 step=98999 	 total_loss= 4.935,itm_loss=0.1887,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.760588725831184e-05
+2022-07-28 08:38:21 - INFO - Epoch=5/10 	 step=99499 	 total_loss= 4.934,itm_loss=0.1885,mlm_loss= 1.634,itc_loss= 3.112,lr[0]=3.743137965498254e-05
+2022-07-28 08:41:34 - INFO - Epoch=5/10 	 step=99999 	 total_loss= 4.933,itm_loss=0.1889,mlm_loss= 1.633,itc_loss= 3.112,lr[0]=3.72560636238301e-05
+2022-07-28 08:44:48 - INFO - Epoch=5/10 	 step=100499 	 total_loss= 4.932,itm_loss=0.1887,mlm_loss= 1.632,itc_loss= 3.112,lr[0]=3.707995056587044e-05
+2022-07-28 08:48:01 - INFO - Epoch=5/10 	 step=100999 	 total_loss= 4.932,itm_loss=0.1886,mlm_loss= 1.632,itc_loss= 3.112,lr[0]=3.690305193395111e-05
+2022-07-28 08:51:15 - INFO - Epoch=5/10 	 step=101499 	 total_loss= 4.932,itm_loss=0.1881,mlm_loss= 1.632,itc_loss= 3.112,lr[0]=3.672537923200651e-05
+2022-07-28 08:54:28 - INFO - Epoch=5/10 	 step=101999 	 total_loss= 4.931,itm_loss=0.1877,mlm_loss= 1.631,itc_loss= 3.112,lr[0]=3.6546944014309735e-05
+2022-07-28 08:57:42 - INFO - Epoch=5/10 	 step=102499 	 total_loss= 4.931,itm_loss=0.1875,mlm_loss= 1.631,itc_loss= 3.112,lr[0]=3.636775788472124e-05
+2022-07-28 09:00:55 - INFO - Epoch=5/10 	 step=102999 	 total_loss=  4.93,itm_loss=0.1873,mlm_loss= 1.631,itc_loss= 3.112,lr[0]=3.618783249593418e-05
+2022-07-28 09:04:08 - INFO - Epoch=5/10 	 step=103499 	 total_loss=  4.93,itm_loss=0.1872,mlm_loss= 1.631,itc_loss= 3.112,lr[0]=3.600717954871665e-05
+2022-07-28 09:07:22 - INFO - Epoch=5/10 	 step=103999 	 total_loss=  4.93,itm_loss=0.1873,mlm_loss= 1.631,itc_loss= 3.112,lr[0]=3.582581079115074e-05
+2022-07-28 09:10:35 - INFO - Epoch=5/10 	 step=104499 	 total_loss= 4.929,itm_loss=0.1874,mlm_loss=  1.63,itc_loss= 3.112,lr[0]=3.56437380178686e-05
+2022-07-28 09:13:49 - INFO - Epoch=5/10 	 step=104999 	 total_loss= 4.929,itm_loss= 0.187,mlm_loss=  1.63,itc_loss= 3.112,lr[0]=3.546097306928534e-05
+2022-07-28 09:17:02 - INFO - Epoch=5/10 	 step=105499 	 total_loss= 4.927,itm_loss=0.1865,mlm_loss= 1.629,itc_loss= 3.112,lr[0]=3.5277527830829115e-05
+2022-07-28 09:20:16 - INFO - Epoch=5/10 	 step=105999 	 total_loss= 4.927,itm_loss=0.1863,mlm_loss= 1.629,itc_loss= 3.112,lr[0]=3.509341423216813e-05
+2022-07-28 09:23:29 - INFO - Epoch=5/10 	 step=106499 	 total_loss= 4.926,itm_loss=0.1859,mlm_loss= 1.629,itc_loss= 3.112,lr[0]=3.4908644246434885e-05
+2022-07-28 09:26:43 - INFO - Epoch=5/10 	 step=106999 	 total_loss= 4.926,itm_loss=0.1859,mlm_loss= 1.628,itc_loss= 3.112,lr[0]=3.4723229889447545e-05
+2022-07-28 09:29:56 - INFO - Epoch=5/10 	 step=107499 	 total_loss= 4.925,itm_loss=0.1859,mlm_loss= 1.628,itc_loss= 3.112,lr[0]=3.453718321892851e-05
+2022-07-28 09:33:10 - INFO - Epoch=5/10 	 step=107999 	 total_loss= 4.924,itm_loss=0.1858,mlm_loss= 1.627,itc_loss= 3.112,lr[0]=3.435051633372031e-05
+2022-07-28 09:36:24 - INFO - Epoch=5/10 	 step=108499 	 total_loss= 4.924,itm_loss=0.1855,mlm_loss= 1.627,itc_loss= 3.112,lr[0]=3.416324137299879e-05
+2022-07-28 09:39:38 - INFO - Epoch=5/10 	 step=108999 	 total_loss= 4.924,itm_loss=0.1855,mlm_loss= 1.627,itc_loss= 3.112,lr[0]=3.39753705154837e-05
+2022-07-28 09:42:52 - INFO - Epoch=5/10 	 step=109499 	 total_loss= 4.923,itm_loss=0.1854,mlm_loss= 1.626,itc_loss= 3.112,lr[0]=3.378691597864666e-05
+2022-07-28 09:46:06 - INFO - Epoch=5/10 	 step=109999 	 total_loss= 4.923,itm_loss=0.1853,mlm_loss= 1.626,itc_loss= 3.112,lr[0]=3.3597890017916703e-05
+2022-07-28 09:49:20 - INFO - Epoch=5/10 	 step=110499 	 total_loss= 4.923,itm_loss=0.1851,mlm_loss= 1.626,itc_loss= 3.112,lr[0]=3.340830492588325e-05
+2022-07-28 09:52:34 - INFO - Epoch=5/10 	 step=110999 	 total_loss= 4.922,itm_loss=0.1849,mlm_loss= 1.626,itc_loss= 3.112,lr[0]=3.32181730314967e-05
+2022-07-28 09:55:47 - INFO - Epoch=5/10 	 step=111499 	 total_loss= 4.922,itm_loss=0.1847,mlm_loss= 1.625,itc_loss= 3.112,lr[0]=3.302750669926669e-05
+2022-07-28 09:59:00 - INFO - Epoch=5/10 	 step=111999 	 total_loss= 4.921,itm_loss=0.1844,mlm_loss= 1.625,itc_loss= 3.112,lr[0]=3.2836318328457996e-05
+2022-07-28 10:02:14 - INFO - Epoch=5/10 	 step=112499 	 total_loss=  4.92,itm_loss=0.1844,mlm_loss= 1.624,itc_loss= 3.112,lr[0]=3.26446203522842e-05
+2022-07-28 10:05:28 - INFO - Epoch=5/10 	 step=112999 	 total_loss= 4.921,itm_loss=0.1844,mlm_loss= 1.624,itc_loss= 3.112,lr[0]=3.245242523709915e-05
+2022-07-28 10:08:41 - INFO - Epoch=5/10 	 step=113499 	 total_loss=  4.92,itm_loss=0.1844,mlm_loss= 1.624,itc_loss= 3.112,lr[0]=3.2259745481586256e-05
+2022-07-28 10:11:55 - INFO - Epoch=5/10 	 step=113999 	 total_loss= 4.919,itm_loss=0.1841,mlm_loss= 1.624,itc_loss= 3.112,lr[0]=3.206659361594567e-05
+2022-07-28 10:15:09 - INFO - Epoch=5/10 	 step=114499 	 total_loss= 4.919,itm_loss=0.1839,mlm_loss= 1.624,itc_loss= 3.112,lr[0]=3.187298220107945e-05
+2022-07-28 10:18:44 - INFO - Epoch=6/10 	 step=114999 	 total_loss= 4.872,itm_loss=0.1644,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=3.167892382777471e-05
+2022-07-28 10:21:58 - INFO - Epoch=6/10 	 step=115499 	 total_loss= 4.876,itm_loss=0.1651,mlm_loss= 1.599,itc_loss= 3.112,lr[0]=3.148443111588479e-05
+2022-07-28 10:25:12 - INFO - Epoch=6/10 	 step=115999 	 total_loss= 4.876,itm_loss=0.1649,mlm_loss= 1.599,itc_loss= 3.112,lr[0]=3.1289516713508635e-05
+2022-07-28 10:28:25 - INFO - Epoch=6/10 	 step=116499 	 total_loss= 4.879,itm_loss=0.1663,mlm_loss= 1.602,itc_loss= 3.112,lr[0]=3.109419329616822e-05
+2022-07-28 10:31:39 - INFO - Epoch=6/10 	 step=116999 	 total_loss= 4.877,itm_loss=0.1681,mlm_loss= 1.597,itc_loss= 3.112,lr[0]=3.089847356598425e-05
+2022-07-28 10:34:52 - INFO - Epoch=6/10 	 step=117499 	 total_loss=  4.88,itm_loss=0.1689,mlm_loss=   1.6,itc_loss= 3.112,lr[0]=3.070237025085017e-05
+2022-07-28 10:38:06 - INFO - Epoch=6/10 	 step=117999 	 total_loss= 4.882,itm_loss=0.1687,mlm_loss= 1.602,itc_loss= 3.112,lr[0]=3.0505896103604402e-05
+2022-07-28 10:41:20 - INFO - Epoch=6/10 	 step=118499 	 total_loss= 4.877,itm_loss=0.1674,mlm_loss= 1.598,itc_loss= 3.112,lr[0]=3.0309063901201036e-05
+2022-07-28 10:44:33 - INFO - Epoch=6/10 	 step=118999 	 total_loss= 4.877,itm_loss=0.1675,mlm_loss= 1.598,itc_loss= 3.112,lr[0]=3.011188644387893e-05
+2022-07-28 10:47:48 - INFO - Epoch=6/10 	 step=119499 	 total_loss= 4.876,itm_loss= 0.168,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.9914376554329298e-05
+2022-07-28 10:51:01 - INFO - Epoch=6/10 	 step=119999 	 total_loss= 4.877,itm_loss=0.1685,mlm_loss= 1.597,itc_loss= 3.112,lr[0]=2.971654707686181e-05
+2022-07-28 10:54:15 - INFO - Epoch=6/10 	 step=120499 	 total_loss= 4.876,itm_loss=0.1684,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.951841087656935e-05
+2022-07-28 10:57:28 - INFO - Epoch=6/10 	 step=120999 	 total_loss= 4.877,itm_loss=0.1691,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.9319980838491358e-05
+2022-07-28 11:00:42 - INFO - Epoch=6/10 	 step=121499 	 total_loss= 4.878,itm_loss=0.1697,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.912126986677588e-05
+2022-07-28 11:03:55 - INFO - Epoch=6/10 	 step=121999 	 total_loss= 4.877,itm_loss=0.1687,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.8922290883840458e-05
+2022-07-28 11:07:09 - INFO - Epoch=6/10 	 step=122499 	 total_loss= 4.877,itm_loss=0.1686,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.8723056829531704e-05
+2022-07-28 11:10:23 - INFO - Epoch=6/10 	 step=122999 	 total_loss= 4.877,itm_loss=0.1686,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.852358066028385e-05
+2022-07-28 11:13:36 - INFO - Epoch=6/10 	 step=123499 	 total_loss= 4.877,itm_loss=0.1691,mlm_loss= 1.596,itc_loss= 3.112,lr[0]=2.832387534827614e-05
+2022-07-28 11:16:50 - INFO - Epoch=6/10 	 step=123999 	 total_loss= 4.876,itm_loss=0.1691,mlm_loss= 1.595,itc_loss= 3.112,lr[0]=2.8123953880589277e-05
+2022-07-28 11:20:03 - INFO - Epoch=6/10 	 step=124499 	 total_loss= 4.876,itm_loss=0.1691,mlm_loss= 1.595,itc_loss= 3.112,lr[0]=2.7923829258360805e-05
+2022-07-28 11:23:17 - INFO - Epoch=6/10 	 step=124999 	 total_loss= 4.875,itm_loss= 0.169,mlm_loss= 1.594,itc_loss= 3.112,lr[0]=2.7723514495939683e-05
+2022-07-28 11:26:30 - INFO - Epoch=6/10 	 step=125499 	 total_loss= 4.874,itm_loss=0.1688,mlm_loss= 1.593,itc_loss= 3.112,lr[0]=2.7523022620039895e-05
+2022-07-28 11:29:44 - INFO - Epoch=6/10 	 step=125999 	 total_loss= 4.873,itm_loss=0.1687,mlm_loss= 1.593,itc_loss= 3.112,lr[0]=2.732236666889335e-05
+2022-07-28 11:32:58 - INFO - Epoch=6/10 	 step=126499 	 total_loss= 4.873,itm_loss=0.1682,mlm_loss= 1.593,itc_loss= 3.112,lr[0]=2.712155969140196e-05
+2022-07-28 11:36:11 - INFO - Epoch=6/10 	 step=126999 	 total_loss= 4.873,itm_loss=0.1682,mlm_loss= 1.593,itc_loss= 3.112,lr[0]=2.692061474628907e-05
+2022-07-28 11:39:25 - INFO - Epoch=6/10 	 step=127499 	 total_loss= 4.873,itm_loss=0.1681,mlm_loss= 1.593,itc_loss= 3.112,lr[0]=2.6719544901250216e-05
+2022-07-28 11:42:39 - INFO - Epoch=6/10 	 step=127999 	 total_loss= 4.873,itm_loss= 0.168,mlm_loss= 1.593,itc_loss= 3.112,lr[0]=2.6518363232103344e-05
+2022-07-28 11:45:52 - INFO - Epoch=6/10 	 step=128499 	 total_loss= 4.872,itm_loss=0.1683,mlm_loss= 1.592,itc_loss= 3.112,lr[0]=2.6317082821938464e-05
+2022-07-28 11:49:06 - INFO - Epoch=6/10 	 step=128999 	 total_loss= 4.873,itm_loss=0.1686,mlm_loss= 1.592,itc_loss= 3.112,lr[0]=2.611571676026681e-05
+2022-07-28 11:52:20 - INFO - Epoch=6/10 	 step=129499 	 total_loss= 4.873,itm_loss=0.1688,mlm_loss= 1.592,itc_loss= 3.112,lr[0]=2.591427814216967e-05
+2022-07-28 11:55:33 - INFO - Epoch=6/10 	 step=129999 	 total_loss= 4.872,itm_loss=0.1688,mlm_loss= 1.592,itc_loss= 3.112,lr[0]=2.571278006744673e-05
+2022-07-28 11:58:47 - INFO - Epoch=6/10 	 step=130499 	 total_loss= 4.872,itm_loss=0.1685,mlm_loss= 1.591,itc_loss= 3.112,lr[0]=2.5511235639764242e-05
+2022-07-28 12:02:02 - INFO - Epoch=6/10 	 step=130999 	 total_loss= 4.872,itm_loss=0.1686,mlm_loss= 1.591,itc_loss= 3.112,lr[0]=2.5309657965802835e-05
+2022-07-28 12:05:15 - INFO - Epoch=6/10 	 step=131499 	 total_loss= 4.871,itm_loss=0.1684,mlm_loss= 1.591,itc_loss= 3.112,lr[0]=2.5108060154405184e-05
+2022-07-28 12:08:29 - INFO - Epoch=6/10 	 step=131999 	 total_loss= 4.871,itm_loss=0.1683,mlm_loss= 1.591,itc_loss= 3.112,lr[0]=2.4906455315723525e-05
+2022-07-28 12:11:44 - INFO - Epoch=6/10 	 step=132499 	 total_loss=  4.87,itm_loss=0.1683,mlm_loss=  1.59,itc_loss= 3.112,lr[0]=2.4704856560367105e-05
+2022-07-28 12:14:57 - INFO - Epoch=6/10 	 step=132999 	 total_loss=  4.87,itm_loss=0.1683,mlm_loss=  1.59,itc_loss= 3.112,lr[0]=2.4503276998549524e-05
+2022-07-28 12:18:11 - INFO - Epoch=6/10 	 step=133499 	 total_loss=  4.87,itm_loss=0.1685,mlm_loss=  1.59,itc_loss= 3.112,lr[0]=2.4301729739236252e-05
+2022-07-28 12:21:24 - INFO - Epoch=6/10 	 step=133999 	 total_loss= 4.869,itm_loss=0.1685,mlm_loss= 1.589,itc_loss= 3.112,lr[0]=2.410022788929206e-05
+2022-07-28 12:24:39 - INFO - Epoch=6/10 	 step=134499 	 total_loss= 4.869,itm_loss=0.1686,mlm_loss= 1.589,itc_loss= 3.112,lr[0]=2.389878455262869e-05
+2022-07-28 12:27:52 - INFO - Epoch=6/10 	 step=134999 	 total_loss= 4.869,itm_loss=0.1685,mlm_loss= 1.588,itc_loss= 3.112,lr[0]=2.3697412829352694e-05
+2022-07-28 12:31:06 - INFO - Epoch=6/10 	 step=135499 	 total_loss= 4.868,itm_loss=0.1685,mlm_loss= 1.588,itc_loss= 3.112,lr[0]=2.3496125814913545e-05
+2022-07-28 12:34:20 - INFO - Epoch=6/10 	 step=135999 	 total_loss= 4.868,itm_loss=0.1684,mlm_loss= 1.588,itc_loss= 3.112,lr[0]=2.329493659925196e-05
+2022-07-28 12:37:33 - INFO - Epoch=6/10 	 step=136499 	 total_loss= 4.867,itm_loss=0.1684,mlm_loss= 1.587,itc_loss= 3.112,lr[0]=2.3093858265948702e-05
+2022-07-28 12:40:47 - INFO - Epoch=6/10 	 step=136999 	 total_loss= 4.867,itm_loss=0.1683,mlm_loss= 1.587,itc_loss= 3.112,lr[0]=2.2892903891373706e-05
+2022-07-28 12:44:21 - INFO - Epoch=7/10 	 step=137499 	 total_loss= 4.703,itm_loss= 0.131,mlm_loss=  1.46,itc_loss= 3.112,lr[0]=2.269208654383574e-05
+2022-07-28 23:42:16 - INFO - Creating model
+2022-07-28 23:43:52 - INFO - Creating model
+2022-07-28 23:45:02 - INFO - Creating model
+2022-07-28 23:45:21 - INFO - Epoch=7/10 	 step=137499 	 total_loss= 4.876,itm_loss=0.1837,mlm_loss=  1.58,itc_loss= 3.112,lr[0]=2.269208654383574e-05
+2022-07-28 23:48:34 - INFO - Epoch=7/10 	 step=137999 	 total_loss= 4.836,itm_loss= 0.159,mlm_loss= 1.566,itc_loss= 3.112,lr[0]=2.249141928273252e-05
+2022-07-28 23:51:47 - INFO - Epoch=7/10 	 step=138499 	 total_loss= 4.838,itm_loss=0.1555,mlm_loss= 1.571,itc_loss= 3.112,lr[0]=2.229091515770146e-05
+2022-07-28 23:55:01 - INFO - Epoch=7/10 	 step=138999 	 total_loss= 4.834,itm_loss=0.1554,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=2.2090587207771035e-05
+2022-07-28 23:58:15 - INFO - Epoch=7/10 	 step=139499 	 total_loss= 4.828,itm_loss=0.1541,mlm_loss= 1.563,itc_loss= 3.112,lr[0]=2.189044846051284e-05
+2022-07-29 00:01:28 - INFO - Epoch=7/10 	 step=139999 	 total_loss= 4.828,itm_loss=0.1551,mlm_loss= 1.561,itc_loss= 3.112,lr[0]=2.16905119311944e-05
+2022-07-29 00:04:42 - INFO - Epoch=7/10 	 step=140499 	 total_loss=  4.83,itm_loss=0.1548,mlm_loss= 1.563,itc_loss= 3.112,lr[0]=2.149079062193273e-05
+2022-07-29 00:07:55 - INFO - Epoch=7/10 	 step=140999 	 total_loss= 4.831,itm_loss= 0.155,mlm_loss= 1.565,itc_loss= 3.112,lr[0]=2.1291297520848856e-05
+2022-07-29 00:11:09 - INFO - Epoch=7/10 	 step=141499 	 total_loss= 4.833,itm_loss=0.1543,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=2.1092045601223126e-05
+2022-07-29 00:14:23 - INFO - Epoch=7/10 	 step=141999 	 total_loss= 4.833,itm_loss=0.1544,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=2.089304782065155e-05
+2022-07-29 00:17:36 - INFO - Epoch=7/10 	 step=142499 	 total_loss= 4.834,itm_loss= 0.155,mlm_loss= 1.568,itc_loss= 3.112,lr[0]=2.0694317120203217e-05
+2022-07-29 00:20:50 - INFO - Epoch=7/10 	 step=142999 	 total_loss= 4.834,itm_loss=0.1551,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=2.0495866423578617e-05
+2022-07-29 00:24:03 - INFO - Epoch=7/10 	 step=143499 	 total_loss= 4.833,itm_loss=0.1549,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=2.0297708636269265e-05
+2022-07-29 00:27:17 - INFO - Epoch=7/10 	 step=143999 	 total_loss= 4.834,itm_loss=0.1556,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=2.0099856644718413e-05
+2022-07-29 00:30:31 - INFO - Epoch=7/10 	 step=144499 	 total_loss= 4.835,itm_loss=0.1561,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=1.9902323315483083e-05
+2022-07-29 00:33:45 - INFO - Epoch=7/10 	 step=144999 	 total_loss= 4.835,itm_loss=0.1565,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=1.970512149439725e-05
+2022-07-29 00:36:58 - INFO - Epoch=7/10 	 step=145499 	 total_loss= 4.836,itm_loss=0.1566,mlm_loss= 1.568,itc_loss= 3.112,lr[0]=1.9508264005736533e-05
+2022-07-29 00:40:12 - INFO - Epoch=7/10 	 step=145999 	 total_loss= 4.835,itm_loss=0.1562,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=1.9311763651384175e-05
+2022-07-29 00:43:26 - INFO - Epoch=7/10 	 step=146499 	 total_loss= 4.835,itm_loss= 0.156,mlm_loss= 1.568,itc_loss= 3.112,lr[0]=1.9115633209998567e-05
+2022-07-29 00:46:39 - INFO - Epoch=7/10 	 step=146999 	 total_loss= 4.835,itm_loss=0.1556,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=1.8919885436182178e-05
+2022-07-29 00:49:52 - INFO - Epoch=7/10 	 step=147499 	 total_loss= 4.835,itm_loss=0.1556,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=1.872453305965214e-05
+2022-07-29 00:53:06 - INFO - Epoch=7/10 	 step=147999 	 total_loss= 4.834,itm_loss=0.1551,mlm_loss= 1.567,itc_loss= 3.112,lr[0]=1.8529588784412445e-05
+2022-07-29 00:56:19 - INFO - Epoch=7/10 	 step=148499 	 total_loss= 4.833,itm_loss=0.1551,mlm_loss= 1.566,itc_loss= 3.112,lr[0]=1.8335065287927726e-05
+2022-07-29 00:59:33 - INFO - Epoch=7/10 	 step=148999 	 total_loss= 4.832,itm_loss=0.1552,mlm_loss= 1.566,itc_loss= 3.112,lr[0]=1.8140975220298876e-05
+2022-07-29 01:02:46 - INFO - Epoch=7/10 	 step=149499 	 total_loss= 4.832,itm_loss=0.1548,mlm_loss= 1.566,itc_loss= 3.112,lr[0]=1.7947331203440358e-05
+2022-07-29 01:06:00 - INFO - Epoch=7/10 	 step=149999 	 total_loss= 4.831,itm_loss=0.1544,mlm_loss= 1.565,itc_loss= 3.112,lr[0]=1.775414583025945e-05
+2022-07-29 01:09:13 - INFO - Epoch=7/10 	 step=150499 	 total_loss= 4.831,itm_loss=0.1545,mlm_loss= 1.565,itc_loss= 3.112,lr[0]=1.756143166383723e-05
+2022-07-29 01:12:27 - INFO - Epoch=7/10 	 step=150999 	 total_loss= 4.831,itm_loss=0.1547,mlm_loss= 1.565,itc_loss= 3.112,lr[0]=1.7369201236611633e-05
+2022-07-29 01:15:40 - INFO - Epoch=7/10 	 step=151499 	 total_loss= 4.831,itm_loss=0.1544,mlm_loss= 1.565,itc_loss= 3.112,lr[0]=1.7177467049562465e-05
+2022-07-29 01:18:54 - INFO - Epoch=7/10 	 step=151999 	 total_loss=  4.83,itm_loss=0.1542,mlm_loss= 1.564,itc_loss= 3.112,lr[0]=1.6986241571398403e-05
+2022-07-29 01:22:07 - INFO - Epoch=7/10 	 step=152499 	 total_loss=  4.83,itm_loss=0.1539,mlm_loss= 1.564,itc_loss= 3.112,lr[0]=1.6795537237746173e-05
+2022-07-29 01:25:20 - INFO - Epoch=7/10 	 step=152999 	 total_loss= 4.829,itm_loss=0.1538,mlm_loss= 1.564,itc_loss= 3.112,lr[0]=1.660536645034182e-05
+2022-07-29 01:28:34 - INFO - Epoch=7/10 	 step=153499 	 total_loss= 4.829,itm_loss=0.1536,mlm_loss= 1.564,itc_loss= 3.112,lr[0]=1.641574157622425e-05
+2022-07-29 01:31:48 - INFO - Epoch=7/10 	 step=153999 	 total_loss= 4.828,itm_loss=0.1536,mlm_loss= 1.563,itc_loss= 3.112,lr[0]=1.6226674946930946e-05
+2022-07-29 01:35:01 - INFO - Epoch=7/10 	 step=154499 	 total_loss= 4.828,itm_loss=0.1535,mlm_loss= 1.562,itc_loss= 3.112,lr[0]=1.603817885769605e-05
+2022-07-29 01:38:14 - INFO - Epoch=7/10 	 step=154999 	 total_loss= 4.826,itm_loss=0.1532,mlm_loss= 1.561,itc_loss= 3.112,lr[0]=1.5850265566650775e-05
+2022-07-29 01:41:28 - INFO - Epoch=7/10 	 step=155499 	 total_loss= 4.825,itm_loss=0.1529,mlm_loss= 1.561,itc_loss= 3.112,lr[0]=1.566294729402627e-05
+2022-07-29 01:44:41 - INFO - Epoch=7/10 	 step=155999 	 total_loss= 4.825,itm_loss=0.1527,mlm_loss= 1.561,itc_loss= 3.112,lr[0]=1.5476236221358913e-05
+2022-07-29 01:47:54 - INFO - Epoch=7/10 	 step=156499 	 total_loss= 4.824,itm_loss=0.1525,mlm_loss=  1.56,itc_loss= 3.112,lr[0]=1.5290144490698097e-05
+2022-07-29 01:51:08 - INFO - Epoch=7/10 	 step=156999 	 total_loss= 4.824,itm_loss=0.1524,mlm_loss=  1.56,itc_loss= 3.112,lr[0]=1.5104684203816685e-05
+2022-07-29 01:54:21 - INFO - Epoch=7/10 	 step=157499 	 total_loss= 4.824,itm_loss=0.1523,mlm_loss=  1.56,itc_loss= 3.112,lr[0]=1.491986742142395e-05
+2022-07-29 01:57:35 - INFO - Epoch=7/10 	 step=157999 	 total_loss= 4.823,itm_loss= 0.152,mlm_loss=  1.56,itc_loss= 3.112,lr[0]=1.4735706162381291e-05
+2022-07-29 02:00:48 - INFO - Epoch=7/10 	 step=158499 	 total_loss= 4.823,itm_loss=0.1519,mlm_loss=  1.56,itc_loss= 3.112,lr[0]=1.4552212402920612e-05
+2022-07-29 02:04:02 - INFO - Epoch=7/10 	 step=158999 	 total_loss= 4.822,itm_loss=0.1516,mlm_loss= 1.559,itc_loss= 3.112,lr[0]=1.4369398075865542e-05
+2022-07-29 02:07:15 - INFO - Epoch=7/10 	 step=159499 	 total_loss= 4.822,itm_loss=0.1513,mlm_loss= 1.559,itc_loss= 3.112,lr[0]=1.4187275069855333e-05
+2022-07-29 02:10:29 - INFO - Epoch=7/10 	 step=159999 	 total_loss= 4.821,itm_loss=0.1511,mlm_loss= 1.559,itc_loss= 3.112,lr[0]=1.4005855228571818e-05
+2022-07-29 02:14:06 - INFO - Epoch=8/10 	 step=160499 	 total_loss= 4.826,itm_loss= 0.155,mlm_loss=  1.56,itc_loss= 3.112,lr[0]=1.3825150349969168e-05
+2022-07-29 02:17:20 - INFO - Epoch=8/10 	 step=160999 	 total_loss= 4.809,itm_loss= 0.148,mlm_loss=  1.55,itc_loss= 3.112,lr[0]=1.3645172185506649e-05
+2022-07-29 02:20:33 - INFO - Epoch=8/10 	 step=161499 	 total_loss= 4.803,itm_loss=0.1452,mlm_loss= 1.546,itc_loss= 3.112,lr[0]=1.3465932439384404e-05
+2022-07-29 02:23:47 - INFO - Epoch=8/10 	 step=161999 	 total_loss= 4.805,itm_loss=0.1462,mlm_loss= 1.547,itc_loss= 3.112,lr[0]=1.3287442767782355e-05
+2022-07-29 02:27:00 - INFO - Epoch=8/10 	 step=162499 	 total_loss= 4.802,itm_loss=0.1453,mlm_loss= 1.545,itc_loss= 3.112,lr[0]=1.3109714778102139e-05
+2022-07-29 02:30:14 - INFO - Epoch=8/10 	 step=162999 	 total_loss= 4.802,itm_loss=0.1454,mlm_loss= 1.545,itc_loss= 3.112,lr[0]=1.2932760028212316e-05
+2022-07-29 02:33:27 - INFO - Epoch=8/10 	 step=163499 	 total_loss= 4.801,itm_loss=0.1455,mlm_loss= 1.544,itc_loss= 3.112,lr[0]=1.2756590025696669e-05
+2022-07-29 02:36:40 - INFO - Epoch=8/10 	 step=163999 	 total_loss= 4.799,itm_loss=0.1454,mlm_loss= 1.542,itc_loss= 3.112,lr[0]=1.2581216227105935e-05
+2022-07-29 02:39:54 - INFO - Epoch=8/10 	 step=164499 	 total_loss= 4.799,itm_loss=0.1459,mlm_loss= 1.541,itc_loss= 3.112,lr[0]=1.2406650037212738e-05
+2022-07-29 02:43:08 - INFO - Epoch=8/10 	 step=164999 	 total_loss= 4.801,itm_loss=0.1464,mlm_loss= 1.543,itc_loss= 3.112,lr[0]=1.2232902808269894e-05
+2022-07-29 02:46:21 - INFO - Epoch=8/10 	 step=165499 	 total_loss= 4.802,itm_loss=0.1465,mlm_loss= 1.544,itc_loss= 3.112,lr[0]=1.2059985839272208e-05
+2022-07-29 02:49:34 - INFO - Epoch=8/10 	 step=165999 	 total_loss= 4.801,itm_loss=0.1458,mlm_loss= 1.544,itc_loss= 3.112,lr[0]=1.1887910375221661e-05
+2022-07-29 02:52:48 - INFO - Epoch=8/10 	 step=166499 	 total_loss= 4.801,itm_loss=0.1454,mlm_loss= 1.544,itc_loss= 3.112,lr[0]=1.1716687606396149e-05
+2022-07-29 02:56:02 - INFO - Epoch=8/10 	 step=166999 	 total_loss=   4.8,itm_loss=0.1453,mlm_loss= 1.543,itc_loss= 3.112,lr[0]=1.1546328667621718e-05
+2022-07-29 02:59:15 - INFO - Epoch=8/10 	 step=167499 	 total_loss= 4.799,itm_loss=0.1452,mlm_loss= 1.543,itc_loss= 3.112,lr[0]=1.1376844637548528e-05
+2022-07-29 03:02:28 - INFO - Epoch=8/10 	 step=167999 	 total_loss= 4.801,itm_loss=0.1455,mlm_loss= 1.544,itc_loss= 3.112,lr[0]=1.120824653793034e-05
+2022-07-29 03:05:42 - INFO - Epoch=8/10 	 step=168499 	 total_loss=   4.8,itm_loss=0.1452,mlm_loss= 1.543,itc_loss= 3.112,lr[0]=1.1040545332907784e-05
+2022-07-29 03:08:55 - INFO - Epoch=8/10 	 step=168999 	 total_loss= 4.799,itm_loss=0.1453,mlm_loss= 1.542,itc_loss= 3.112,lr[0]=1.0873751928295303e-05
+2022-07-29 03:12:09 - INFO - Epoch=8/10 	 step=169499 	 total_loss=   4.8,itm_loss=0.1451,mlm_loss= 1.543,itc_loss= 3.112,lr[0]=1.0707877170872033e-05
+2022-07-29 03:15:22 - INFO - Epoch=8/10 	 step=169999 	 total_loss= 4.801,itm_loss=0.1455,mlm_loss= 1.544,itc_loss= 3.112,lr[0]=1.0542931847676293e-05
+2022-07-29 03:18:36 - INFO - Epoch=8/10 	 step=170499 	 total_loss=   4.8,itm_loss=0.1453,mlm_loss= 1.543,itc_loss= 3.112,lr[0]=1.0378926685304208e-05
+2022-07-29 03:21:49 - INFO - Epoch=8/10 	 step=170999 	 total_loss= 4.799,itm_loss=0.1453,mlm_loss= 1.542,itc_loss= 3.112,lr[0]=1.0215872349212041e-05
+2022-07-29 03:25:03 - INFO - Epoch=8/10 	 step=171499 	 total_loss= 4.799,itm_loss=0.1451,mlm_loss= 1.542,itc_loss= 3.112,lr[0]=1.0053779443022729e-05
+2022-07-29 03:28:16 - INFO - Epoch=8/10 	 step=171999 	 total_loss= 4.798,itm_loss=0.1449,mlm_loss= 1.541,itc_loss= 3.112,lr[0]=9.892658507836186e-06
+2022-07-29 03:31:30 - INFO - Epoch=8/10 	 step=172499 	 total_loss= 4.797,itm_loss=0.1449,mlm_loss= 1.541,itc_loss= 3.112,lr[0]=9.7325200215439e-06
+2022-07-29 03:34:43 - INFO - Epoch=8/10 	 step=172999 	 total_loss= 4.797,itm_loss=0.1448,mlm_loss= 1.541,itc_loss= 3.112,lr[0]=9.573374398147467e-06
+2022-07-29 03:37:57 - INFO - Epoch=8/10 	 step=173499 	 total_loss= 4.797,itm_loss= 0.145,mlm_loss= 1.541,itc_loss= 3.112,lr[0]=9.415231987081455e-06
+2022-07-29 03:41:10 - INFO - Epoch=8/10 	 step=173999 	 total_loss= 4.797,itm_loss=0.1451,mlm_loss=  1.54,itc_loss= 3.112,lr[0]=9.258103072540242e-06
+2022-07-29 03:44:24 - INFO - Epoch=8/10 	 step=174499 	 total_loss= 4.796,itm_loss=0.1449,mlm_loss=  1.54,itc_loss= 3.112,lr[0]=9.101997872809329e-06
+2022-07-29 03:47:37 - INFO - Epoch=8/10 	 step=174999 	 total_loss= 4.796,itm_loss=0.1449,mlm_loss=  1.54,itc_loss= 3.112,lr[0]=8.946926539600776e-06
+2022-07-29 03:50:51 - INFO - Epoch=8/10 	 step=175499 	 total_loss= 4.796,itm_loss=0.1446,mlm_loss=  1.54,itc_loss= 3.112,lr[0]=8.79289915739305e-06
+2022-07-29 03:54:04 - INFO - Epoch=8/10 	 step=175999 	 total_loss= 4.795,itm_loss=0.1444,mlm_loss= 1.539,itc_loss= 3.112,lr[0]=8.639925742775187e-06
+2022-07-29 03:57:18 - INFO - Epoch=8/10 	 step=176499 	 total_loss= 4.795,itm_loss=0.1443,mlm_loss= 1.539,itc_loss= 3.112,lr[0]=8.488016243795435e-06
+2022-07-29 04:00:31 - INFO - Epoch=8/10 	 step=176999 	 total_loss= 4.794,itm_loss=0.1441,mlm_loss= 1.538,itc_loss= 3.112,lr[0]=8.337180539314313e-06
+2022-07-29 04:03:45 - INFO - Epoch=8/10 	 step=177499 	 total_loss= 4.794,itm_loss=0.1441,mlm_loss= 1.538,itc_loss= 3.112,lr[0]=8.187428438362163e-06
+2022-07-29 04:06:58 - INFO - Epoch=8/10 	 step=177999 	 total_loss= 4.793,itm_loss=0.1441,mlm_loss= 1.538,itc_loss= 3.112,lr[0]=8.038769679501252e-06
+2022-07-29 04:10:11 - INFO - Epoch=8/10 	 step=178499 	 total_loss= 4.792,itm_loss=0.1441,mlm_loss= 1.537,itc_loss= 3.112,lr[0]=7.891213930192493e-06
+2022-07-29 04:13:25 - INFO - Epoch=8/10 	 step=178999 	 total_loss= 4.792,itm_loss= 0.144,mlm_loss= 1.537,itc_loss= 3.112,lr[0]=7.74477078616673e-06
+2022-07-29 04:16:38 - INFO - Epoch=8/10 	 step=179499 	 total_loss= 4.791,itm_loss= 0.144,mlm_loss= 1.536,itc_loss= 3.112,lr[0]=7.599449770800737e-06
+2022-07-29 04:19:52 - INFO - Epoch=8/10 	 step=179999 	 total_loss= 4.791,itm_loss= 0.144,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=7.45526033449786e-06
+2022-07-29 04:23:05 - INFO - Epoch=8/10 	 step=180499 	 total_loss= 4.791,itm_loss= 0.144,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=7.312211854073503e-06
+2022-07-29 04:26:18 - INFO - Epoch=8/10 	 step=180999 	 total_loss= 4.791,itm_loss=0.1439,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=7.170313632145301e-06
+2022-07-29 04:29:32 - INFO - Epoch=8/10 	 step=181499 	 total_loss= 4.791,itm_loss= 0.144,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=7.029574896528179e-06
+2022-07-29 04:32:45 - INFO - Epoch=8/10 	 step=181999 	 total_loss= 4.791,itm_loss= 0.144,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=6.8900047996342365e-06
+2022-07-29 04:35:58 - INFO - Epoch=8/10 	 step=182499 	 total_loss= 4.791,itm_loss= 0.144,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=6.751612417877576e-06
+2022-07-29 04:39:12 - INFO - Epoch=8/10 	 step=182999 	 total_loss=  4.79,itm_loss=0.1439,mlm_loss= 1.535,itc_loss= 3.112,lr[0]=6.614406751084057e-06
+2022-07-29 04:42:50 - INFO - Epoch=9/10 	 step=183499 	 total_loss=   4.8,itm_loss=0.1429,mlm_loss= 1.545,itc_loss= 3.112,lr[0]=6.478396721905972e-06
+2022-07-29 04:46:03 - INFO - Epoch=9/10 	 step=183999 	 total_loss= 4.773,itm_loss= 0.138,mlm_loss= 1.524,itc_loss= 3.112,lr[0]=6.3435911752419e-06
+2022-07-29 04:49:17 - INFO - Epoch=9/10 	 step=184499 	 total_loss=  4.77,itm_loss=0.1362,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=6.209998877661391e-06
+2022-07-29 04:52:31 - INFO - Epoch=9/10 	 step=184999 	 total_loss= 4.773,itm_loss=0.1371,mlm_loss= 1.524,itc_loss= 3.111,lr[0]=6.0776285168349625e-06
+2022-07-29 04:55:44 - INFO - Epoch=9/10 	 step=185499 	 total_loss= 4.773,itm_loss= 0.137,mlm_loss= 1.525,itc_loss= 3.111,lr[0]=5.946488700969047e-06
+2022-07-29 04:58:58 - INFO - Epoch=9/10 	 step=185999 	 total_loss= 4.776,itm_loss=0.1372,mlm_loss= 1.527,itc_loss= 3.111,lr[0]=5.816587958246297e-06
+2022-07-29 05:02:11 - INFO - Epoch=9/10 	 step=186499 	 total_loss= 4.774,itm_loss= 0.137,mlm_loss= 1.526,itc_loss= 3.111,lr[0]=5.687934736270858e-06
+2022-07-29 05:05:24 - INFO - Epoch=9/10 	 step=186999 	 total_loss= 4.774,itm_loss=0.1366,mlm_loss= 1.526,itc_loss= 3.111,lr[0]=5.560537401519117e-06
+2022-07-29 05:08:38 - INFO - Epoch=9/10 	 step=187499 	 total_loss= 4.774,itm_loss=0.1364,mlm_loss= 1.526,itc_loss= 3.111,lr[0]=5.434404238795565e-06
+2022-07-29 05:11:51 - INFO - Epoch=9/10 	 step=187999 	 total_loss= 4.773,itm_loss=0.1362,mlm_loss= 1.525,itc_loss= 3.111,lr[0]=5.309543450694043e-06
+2022-07-29 05:15:05 - INFO - Epoch=9/10 	 step=188499 	 total_loss= 4.771,itm_loss=0.1354,mlm_loss= 1.524,itc_loss= 3.111,lr[0]=5.185963157064305e-06
+2022-07-29 05:18:18 - INFO - Epoch=9/10 	 step=188999 	 total_loss=  4.77,itm_loss=0.1353,mlm_loss= 1.524,itc_loss= 3.111,lr[0]=5.063671394483996e-06
+2022-07-29 05:21:31 - INFO - Epoch=9/10 	 step=189499 	 total_loss=  4.77,itm_loss=0.1354,mlm_loss= 1.523,itc_loss= 3.111,lr[0]=4.9426761157360005e-06
+2022-07-29 05:24:45 - INFO - Epoch=9/10 	 step=189999 	 total_loss=  4.77,itm_loss=0.1356,mlm_loss= 1.523,itc_loss= 3.111,lr[0]=4.82298518929129e-06
+2022-07-29 05:27:59 - INFO - Epoch=9/10 	 step=190499 	 total_loss=  4.77,itm_loss=0.1356,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=4.704606398797182e-06
+2022-07-29 05:31:12 - INFO - Epoch=9/10 	 step=190999 	 total_loss= 4.769,itm_loss=0.1356,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=4.587547442571216e-06
+2022-07-29 05:34:26 - INFO - Epoch=9/10 	 step=191499 	 total_loss= 4.768,itm_loss=0.1353,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=4.471815933100482e-06
+2022-07-29 05:37:39 - INFO - Epoch=9/10 	 step=191999 	 total_loss= 4.769,itm_loss=0.1355,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=4.357419396546594e-06
+2022-07-29 05:40:53 - INFO - Epoch=9/10 	 step=192499 	 total_loss=  4.77,itm_loss=0.1352,mlm_loss= 1.523,itc_loss= 3.111,lr[0]=4.2443652722562145e-06
+2022-07-29 05:44:06 - INFO - Epoch=9/10 	 step=192999 	 total_loss=  4.77,itm_loss=0.1352,mlm_loss= 1.523,itc_loss= 3.111,lr[0]=4.132660912277345e-06
+2022-07-29 05:47:19 - INFO - Epoch=9/10 	 step=193499 	 total_loss= 4.769,itm_loss=0.1351,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=4.022313580881115e-06
+2022-07-29 05:50:33 - INFO - Epoch=9/10 	 step=193999 	 total_loss= 4.768,itm_loss= 0.135,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=3.9133304540894586e-06
+2022-07-29 05:53:46 - INFO - Epoch=9/10 	 step=194499 	 total_loss= 4.768,itm_loss=0.1347,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=3.8057186192083817e-06
+2022-07-29 05:57:00 - INFO - Epoch=9/10 	 step=194999 	 total_loss= 4.768,itm_loss= 0.135,mlm_loss= 1.521,itc_loss= 3.111,lr[0]=3.6994850743671483e-06
+2022-07-29 06:00:13 - INFO - Epoch=9/10 	 step=195499 	 total_loss= 4.768,itm_loss= 0.135,mlm_loss= 1.521,itc_loss= 3.111,lr[0]=3.594636728063089e-06
+2022-07-29 06:03:26 - INFO - Epoch=9/10 	 step=195999 	 total_loss= 4.767,itm_loss=0.1349,mlm_loss= 1.521,itc_loss= 3.111,lr[0]=3.491180398712407e-06
+2022-07-29 06:06:40 - INFO - Epoch=9/10 	 step=196499 	 total_loss= 4.767,itm_loss=0.1344,mlm_loss= 1.521,itc_loss= 3.111,lr[0]=3.3891228142067326e-06
+2022-07-29 06:09:53 - INFO - Epoch=9/10 	 step=196999 	 total_loss= 4.767,itm_loss=0.1345,mlm_loss= 1.521,itc_loss= 3.111,lr[0]=3.2884706114756e-06
+2022-07-29 06:13:06 - INFO - Epoch=9/10 	 step=197499 	 total_loss= 4.766,itm_loss=0.1343,mlm_loss= 1.521,itc_loss= 3.111,lr[0]=3.1892303360548575e-06
+2022-07-29 06:16:20 - INFO - Epoch=9/10 	 step=197999 	 total_loss= 4.766,itm_loss=0.1343,mlm_loss=  1.52,itc_loss= 3.111,lr[0]=3.091408441660998e-06
+2022-07-29 06:19:33 - INFO - Epoch=9/10 	 step=198499 	 total_loss= 4.765,itm_loss=0.1344,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.995011289771454e-06
+2022-07-29 06:22:47 - INFO - Epoch=9/10 	 step=198999 	 total_loss= 4.765,itm_loss=0.1344,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.900045149210903e-06
+2022-07-29 06:26:00 - INFO - Epoch=9/10 	 step=199499 	 total_loss= 4.765,itm_loss=0.1344,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.8065161957436193e-06
+2022-07-29 06:29:14 - INFO - Epoch=9/10 	 step=199999 	 total_loss= 4.765,itm_loss=0.1343,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.7144305116718365e-06
+2022-07-29 06:32:27 - INFO - Epoch=9/10 	 step=200499 	 total_loss= 4.765,itm_loss=0.1346,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.623794085440223e-06
+2022-07-29 06:35:41 - INFO - Epoch=9/10 	 step=200999 	 total_loss= 4.765,itm_loss=0.1347,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.5346128112464144e-06
+2022-07-29 06:38:54 - INFO - Epoch=9/10 	 step=201499 	 total_loss= 4.765,itm_loss=0.1351,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.4468924886577538e-06
+2022-07-29 06:42:07 - INFO - Epoch=9/10 	 step=201999 	 total_loss= 4.765,itm_loss=0.1349,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.360638822234101e-06
+2022-07-29 06:45:20 - INFO - Epoch=9/10 	 step=202499 	 total_loss= 4.765,itm_loss= 0.135,mlm_loss= 1.518,itc_loss= 3.111,lr[0]=2.275857421156885e-06
+2022-07-29 06:48:34 - INFO - Epoch=9/10 	 step=202999 	 total_loss= 4.765,itm_loss=0.1349,mlm_loss= 1.518,itc_loss= 3.111,lr[0]=2.1925537988642996e-06
+2022-07-29 06:51:47 - INFO - Epoch=9/10 	 step=203499 	 total_loss= 4.765,itm_loss=0.1347,mlm_loss= 1.518,itc_loss= 3.111,lr[0]=2.1107333726927915e-06
+2022-07-29 06:55:01 - INFO - Epoch=9/10 	 step=203999 	 total_loss= 4.765,itm_loss=0.1347,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=2.030401463524742e-06
+2022-07-29 06:58:14 - INFO - Epoch=9/10 	 step=204499 	 total_loss= 4.765,itm_loss=0.1346,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=1.95156329544246e-06
+2022-07-29 07:01:27 - INFO - Epoch=9/10 	 step=204999 	 total_loss= 4.765,itm_loss=0.1345,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=1.87422399538843e-06
+2022-07-29 07:04:41 - INFO - Epoch=9/10 	 step=205499 	 total_loss= 4.765,itm_loss=0.1346,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=1.7983885928319343e-06
+2022-07-29 07:07:54 - INFO - Epoch=9/10 	 step=205999 	 total_loss= 4.765,itm_loss=0.1345,mlm_loss= 1.519,itc_loss= 3.111,lr[0]=1.7240620194419438e-06
+2022-07-29 07:11:30 - INFO - Epoch=10/10 	 step=206499 	 total_loss= 4.758,itm_loss=0.1316,mlm_loss= 1.515,itc_loss= 3.112,lr[0]=1.6512491087664367e-06
+2022-07-29 07:14:44 - INFO - Epoch=10/10 	 step=206999 	 total_loss= 4.759,itm_loss=0.1313,mlm_loss= 1.516,itc_loss= 3.112,lr[0]=1.5799545959180372e-06
+2022-07-29 07:17:57 - INFO - Epoch=10/10 	 step=207499 	 total_loss= 4.759,itm_loss=0.1276,mlm_loss=  1.52,itc_loss= 3.112,lr[0]=1.5101831172661285e-06
+2022-07-29 07:21:12 - INFO - Epoch=10/10 	 step=207999 	 total_loss= 4.763,itm_loss=0.1297,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=1.4419392101352903e-06
+2022-07-29 07:24:26 - INFO - Epoch=10/10 	 step=208499 	 total_loss= 4.761,itm_loss=0.1276,mlm_loss= 1.522,itc_loss= 3.111,lr[0]=1.3752273125102744e-06
+2022-07-29 07:27:40 - INFO - Epoch=10/10 	 step=208999 	 total_loss=  4.76,itm_loss=0.1276,mlm_loss=  1.52,itc_loss= 3.111,lr[0]=1.3100517627473663e-06
+2022-07-29 07:30:54 - INFO - Epoch=10/10 	 step=209499 	 total_loss= 4.757,itm_loss= 0.128,mlm_loss= 1.518,itc_loss= 3.111,lr[0]=1.2464167992922938e-06
+2022-07-29 07:34:07 - INFO - Epoch=10/10 	 step=209999 	 total_loss= 4.757,itm_loss=0.1277,mlm_loss= 1.518,itc_loss= 3.111,lr[0]=1.1843265604045445e-06
+2022-07-29 07:37:21 - INFO - Epoch=10/10 	 step=210499 	 total_loss= 4.756,itm_loss=0.1278,mlm_loss= 1.517,itc_loss= 3.111,lr[0]=1.1237850838883041e-06
+2022-07-29 07:40:35 - INFO - Epoch=10/10 	 step=210999 	 total_loss= 4.756,itm_loss=0.1279,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.0647963068298266e-06
+2022-07-29 07:43:48 - INFO - Epoch=10/10 	 step=211499 	 total_loss= 4.755,itm_loss=0.1281,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.0073640653414401e-06
+2022-07-29 07:47:02 - INFO - Epoch=10/10 	 step=211999 	 total_loss= 4.754,itm_loss=0.1277,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=9.514920943120454e-07
+2022-07-29 07:50:16 - INFO - Epoch=10/10 	 step=212499 	 total_loss= 4.753,itm_loss=0.1277,mlm_loss= 1.514,itc_loss= 3.111,lr[0]=8.971840271642496e-07
+2022-07-29 07:53:29 - INFO - Epoch=10/10 	 step=212999 	 total_loss= 4.753,itm_loss=0.1279,mlm_loss= 1.513,itc_loss= 3.111,lr[0]=8.444433956180831e-07
+2022-07-29 07:56:43 - INFO - Epoch=10/10 	 step=213499 	 total_loss= 4.752,itm_loss= 0.128,mlm_loss= 1.513,itc_loss= 3.111,lr[0]=7.932736294613274e-07
+2022-07-29 07:59:57 - INFO - Epoch=10/10 	 step=213999 	 total_loss= 4.753,itm_loss=0.1284,mlm_loss= 1.513,itc_loss= 3.111,lr[0]=7.436780563264467e-07
+2022-07-29 08:03:10 - INFO - Epoch=10/10 	 step=214499 	 total_loss= 4.753,itm_loss=0.1282,mlm_loss= 1.514,itc_loss= 3.111,lr[0]=6.956599014742243e-07
+2022-07-29 08:06:24 - INFO - Epoch=10/10 	 step=214999 	 total_loss= 4.754,itm_loss=0.1288,mlm_loss= 1.514,itc_loss= 3.111,lr[0]=6.49222287584006e-07
+2022-07-29 08:09:38 - INFO - Epoch=10/10 	 step=215499 	 total_loss= 4.755,itm_loss=0.1289,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=6.043682345506063e-07
+2022-07-29 08:12:51 - INFO - Epoch=10/10 	 step=215999 	 total_loss= 4.755,itm_loss=0.1289,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=5.61100659287958e-07
+2022-07-29 08:16:05 - INFO - Epoch=10/10 	 step=216499 	 total_loss= 4.755,itm_loss=0.1289,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=5.194223755394023e-07
+2022-07-29 08:19:18 - INFO - Epoch=10/10 	 step=216999 	 total_loss= 4.755,itm_loss=0.1293,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=4.793360936947044e-07
+2022-07-29 08:22:32 - INFO - Epoch=10/10 	 step=217499 	 total_loss= 4.756,itm_loss=0.1292,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=4.408444206137952e-07
+2022-07-29 08:25:45 - INFO - Epoch=10/10 	 step=217999 	 total_loss= 4.756,itm_loss=0.1294,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=4.0394985945725605e-07
+2022-07-29 08:28:59 - INFO - Epoch=10/10 	 step=218499 	 total_loss= 4.756,itm_loss=0.1295,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=3.6865480952352204e-07
+2022-07-29 08:32:13 - INFO - Epoch=10/10 	 step=218999 	 total_loss= 4.757,itm_loss=0.1295,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=3.349615660928618e-07
+2022-07-29 08:35:27 - INFO - Epoch=10/10 	 step=219499 	 total_loss= 4.757,itm_loss=0.1295,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=3.0287232027809697e-07
+2022-07-29 08:38:40 - INFO - Epoch=10/10 	 step=219999 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=2.723891588821387e-07
+2022-07-29 08:41:54 - INFO - Epoch=10/10 	 step=220499 	 total_loss= 4.757,itm_loss=0.1295,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=2.4351406426224575e-07
+2022-07-29 08:45:08 - INFO - Epoch=10/10 	 step=220999 	 total_loss= 4.757,itm_loss=0.1296,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=2.1624891420114203e-07
+2022-07-29 08:48:22 - INFO - Epoch=10/10 	 step=221499 	 total_loss= 4.757,itm_loss=0.1295,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.9059548178487763e-07
+2022-07-29 08:51:35 - INFO - Epoch=10/10 	 step=221999 	 total_loss= 4.757,itm_loss=0.1295,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.6655543528754647e-07
+2022-07-29 08:54:49 - INFO - Epoch=10/10 	 step=222499 	 total_loss= 4.757,itm_loss=0.1298,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.4413033806276733e-07
+2022-07-29 08:58:03 - INFO - Epoch=10/10 	 step=222999 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.515,itc_loss= 3.111,lr[0]=1.2332164844204298e-07
+2022-07-29 09:01:16 - INFO - Epoch=10/10 	 step=223499 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.0413071963990828e-07
+2022-07-29 09:04:30 - INFO - Epoch=10/10 	 step=223999 	 total_loss= 4.757,itm_loss=0.1298,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=8.655879966593672e-08
+2022-07-29 09:07:44 - INFO - Epoch=10/10 	 step=224499 	 total_loss= 4.758,itm_loss=0.1297,mlm_loss= 1.517,itc_loss= 3.111,lr[0]=7.060703124357193e-08
+2022-07-29 09:10:58 - INFO - Epoch=10/10 	 step=224999 	 total_loss= 4.758,itm_loss=0.1298,mlm_loss= 1.517,itc_loss= 3.111,lr[0]=5.627645173582607e-08
+2022-07-29 09:14:11 - INFO - Epoch=10/10 	 step=225499 	 total_loss= 4.757,itm_loss=0.1299,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=4.356799307781156e-08
+2022-07-29 09:17:25 - INFO - Epoch=10/10 	 step=225999 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=3.248248171613677e-08
+2022-07-29 09:20:39 - INFO - Epoch=10/10 	 step=226499 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=2.302063855516845e-08
+2022-07-29 09:23:52 - INFO - Epoch=10/10 	 step=226999 	 total_loss= 4.757,itm_loss=0.1296,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.5183078910133152e-08
+2022-07-29 09:27:06 - INFO - Epoch=10/10 	 step=227499 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=8.970312467124208e-09
+2022-07-29 09:30:20 - INFO - Epoch=10/10 	 step=227999 	 total_loss= 4.757,itm_loss=0.1297,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=4.38274324993937e-09
+2022-07-29 09:33:34 - INFO - Epoch=10/10 	 step=228499 	 total_loss= 4.757,itm_loss=0.1296,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=1.42066959381848e-09
+2022-07-29 09:36:48 - INFO - Epoch=10/10 	 step=228999 	 total_loss= 4.757,itm_loss=0.1295,mlm_loss= 1.516,itc_loss= 3.111,lr[0]=8.428412603400659e-11
+

@@ -1,0 +1,1689 @@
+2022-07-29 13:13:01 - INFO - Training/evaluation parameters: Namespace(accumlate_step=1, adam_epsilon=1e-06, batch_size=32, bert_cache='data/cache', bert_dir='/home/tione/notebook/env/baseline/opensource_models/chinese-macbert-base', bert_hidden_dropout_prob=0.1, bert_learning_rate=3e-05, bert_max_steps=30000, bert_seq_length=245, bert_seq_length_infer=210, bert_warmup_steps=5000, best_score=0.5, ckpt_file='./save/v1/model_.bin', classifier_learning_rate=4e-05, clip_vit_dir='/home/tione/notebook/ViT-B-16.pt', dropout=0.25, fc_size=512, fgm=False, fold=5, frame_embedding_size=768, freeze=True, freeze_bert_layer=6, learning_rate=5e-05, local_rank=0, log_name='macbert', max_epochs=3, max_frames=16, max_frames_infer=15, max_steps=14000, minimum_lr=0.0, nprocs=2, num_top_layer=4, num_workers=8, prefetch=16, print_steps=100, savedmodel_path='./save', se_ratio=8, seed=2012, test_annotation='/opt/ml/input/data/annotations/test.json', test_batch_size=125, test_output_csv='data/base_result.csv', test_zip_feats='/opt/ml/input/data/zip_frames/test/', text_transforemr_layers=12, train_annotation='/home/tione/notebook/data/annotations/labeled.json', train_zip_feats='/home/tione/notebook/data/Vit_B_16_unlabeled_zip_feats', unlabeld_annotation='/home/tione/notebook/data/annotations/unlabeled_new.json', unlabeld_zip_frames='/home/tione/notebook/data/Vit_B_16_unlabeled_zip_feats', val_batch_size=50, val_ratio=0.1, vision_model='swin_tiny', vison_learning_rate=6e-05, vlad_cluster_size=64, vlad_groups=8, vlad_hidden_size=1024, warmup_steps=1000, weight_decay=0.01)
+2022-07-29 13:13:01 - INFO - Start
+2022-07-29 13:13:01 - INFO - ==================================================================
+2022-07-29 13:13:01 - INFO - Config - pretrain:
+# Pretrain file num
+PRETRAIN_FILE_NUM = 15
+LOAD_DATA_TYPE = 'mem'#'fluid'
+# Training params
+NUM_FOLDS = 1
+SEED = 42
+# BATCH_SIZE = 128
+BATCH_SIZE = 80  #ddp模式中每个batch是16
+NUM_EPOCHS = 8
+WARMUP_RATIO = 0.15
+REINIT_LAYER = 0
+WEIGHT_DECAY = 0.01
+PRETRAIN_TASK = ['mfm', 'itm','itc']
+BERT_PATH = '/home/tione/notebook/env/baseline/opensource_models/chinese-macbert-base'
+NUM_TOP_LAYER = 4
+2022-07-29 13:13:01 - INFO - 
+
+
+
+
+
+
+2022-07-29 13:13:01 - INFO - Config - pretrain:
+import argparse
+
+config = {
+    'log_name': 'macbert',
+    "seed": 2012,
+    "dropout": 0.25,
+    "train_annotation": '/home/tione/notebook/data/annotations/labeled.json',
+    #"test_annotation": "/home/tione/notebook/data/annotations/labeled.json",
+    "test_annotation": "/opt/ml/input/data/annotations/test.json",
+    "train_zip_feats": '/home/tione/notebook/data/Vit_B_16_unlabeled_zip_feats',
+    "test_zip_feats": '/opt/ml/input/data/zip_frames/test/',
+    #"test_zip_feats": '/home/tione/notebook/data/zip_frames/labeled',
+    "test_output_csv": 'data/base_result.csv',
+    "unlabeld_annotation":"/home/tione/notebook/data/annotations/unlabeled_new.json",
+    "unlabeld_zip_frames":"/home/tione/notebook/data/Vit_B_16_unlabeled_zip_feats",
+    "val_ratio": 0.1,  # 验证集大小
+    "batch_size": 32,
+    "accumlate_step":1,
+    "val_batch_size": 50,
+    "test_batch_size": 125,
+    "prefetch": 16,
+    "num_workers": 8,
+    "savedmodel_path": './save',
+    "ckpt_file": './save/v1/model_.bin',
+
+    "best_score": 0.5,
+    'max_epochs': 3,
+    "max_steps": 14000,
+    "print_steps": 100,
+    "warmup_steps": 1000,
+    "minimum_lr": 0.,
+    "learning_rate": 5e-5,
+    "vison_learning_rate": 6e-5,
+    "classifier_learning_rate": 4e-5,
+    "weight_decay": 0.01,
+    "adam_epsilon": 1e-6,
+
+
+    "bert_dir": '/home/tione/notebook/env/baseline/opensource_models/chinese-macbert-base',
+    # "bert_dir" : '../offical/bert_model/nezha',
+    "text_transforemr_layers":12,
+    "bert_cache": 'data/cache',
+    "bert_seq_length": 245,
+    "bert_seq_length_infer": 210,
+    "bert_learning_rate": 3e-5,
+    "bert_warmup_steps": 5000,
+    'bert_max_steps': 30000,
+    "bert_hidden_dropout_prob": 0.1,
+
+    "frame_embedding_size": 768,
+    "max_frames": 16,
+    "max_frames_infer": 15,
+    "vlad_cluster_size": 64,
+    "vlad_groups": 8,
+    "vlad_hidden_size": 1024,
+    "se_ratio": 8,
+    "fc_size": 512,
+    
+    # ========================== Swin ===================================
+    #'swin_pretrained_path':'./opensource_models/swin_tiny_patch4_window7_224.pth',
+    #'swin_pretrained_path':'./inference_model/swin_base_patch4_window7_224_22kto1k.pth',
+    #'swin_pretrained_path':'./inference_model/swin_base_patch4_window7_224_22k.pth',
+    #'swin_pretrained_path':'./inference_model/swinv2_base_patch4_window12_192_22k.pth',
+
+    # ========================== Van ===================================
+    #'van_pretrained_path':'./opensource_models/van_base',
+   
+    # ========================== EfficetFormer ===================================
+    #'EfficetFormer_pretrained_path':'./opensource_models/efficientformer_l1_300d.pth',
+
+    #============================clip vit/16===========================
+    "clip_vit_dir":"/home/tione/notebook/ViT-B-16.pt",
+    # ============================used vision featureExtractor ========================
+    'vision_model':'swin_tiny',  #option swin_tiny efficet_former van swin_base swin_v2
+    
+    #============================add clip loss=======================================
+    #'clip':False,
+    #'clip_weight':2.0,
+    'fgm':False,
+    #============================freeze vison backbone==============================
+    'freeze':True,
+    "num_top_layer":4, #cross layers
+    'freeze_bert_layer':6,
+    'fold':5,
+    
+}
+
+
+def parse_args():
+    configs = argparse.Namespace(**config)
+    return configs
+2022-07-29 13:13:01 - INFO - 
+
+
+
+
+
+
+2022-07-29 13:13:01 - INFO - Config - pretrain:
+import torch
+import torch.nn as nn
+from transformers.models.bert.modeling_bert import BertConfig, BertModel,BertForMaskedLM
+from bert_model import BertCrossLayer
+from objectives import init_weights
+import torch.nn.functional as F
+class MLP(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.transform_1 = nn.Linear(768, 768*2)
+        self.transform_1.apply(init_weights)
+        self.transform_2 = nn.Linear(768*2, 768)
+        self.transform_2.apply(init_weights)
+        self.dropout = torch.nn.Dropout(0.1)
+        self.gelu = nn.GELU()
+    def forward(self, x):
+        x = self.transform_1(x)
+        x = self.gelu(x)
+        x = self.dropout(x)
+        x = self.transform_2(x)
+        x = self.gelu(x)
+        x = self.dropout(x)
+        return x
+class Clip_Vit_Cross_Model_Pretrain(nn.Module):
+    def __init__(self, bert_dir, num_top_layer):
+        super().__init__()
+
+        bert_config = BertConfig.from_pretrained(bert_dir)
+        self.text_encoder = BertForMaskedLM.from_pretrained(bert_dir)
+        self.text_transform = MLP()
+        self.video_transform = MLP()
+        self.text_transform_2 = MLP()
+        self.video_transform_2 = MLP()
+        
+        self.token_type_embeddings = nn.Embedding(2, 768)
+        self.token_type_embeddings.apply(init_weights)
+
+        # ==================cross encoder========================
+        self.cross_modal_image_layers = nn.ModuleList([BertCrossLayer(bert_config) for _ in range(num_top_layer)])
+        self.cross_modal_image_layers.apply(init_weights)
+        
+
+        self.dropout = torch.nn.Dropout(0.1)
+        self.gelu = nn.GELU()
+        
+        '''
+        ALBEF的东西
+        '''
+        self.temp = nn.Parameter(torch.ones([]) * 0.07)   
+        self.queue_size = 4000
+        self.momentum = 0.995
+        self.itm_head = nn.Linear(768, 2)     
+        self.mlm_probability = 0.15
+        # create momentum models
+        self.text_transform_m = MLP()
+        self.video_transform_m = MLP()
+        self.text_transform_2_m = MLP()
+        self.video_transform_2_m = MLP()
+        
+        self.text_encoder_m = BertForMaskedLM.from_pretrained(bert_dir)
+        self.model_pairs = [[self.text_transform,self.text_transform_m],
+                            [self.video_transform,self.video_transform_m],
+                            [self.text_encoder,self.text_encoder_m],
+                            [self.text_transform_2,self.text_transform_2_m],
+                            [self.video_transform_2,self.video_transform_2_m],
+                           ]
+        
+        self.copy_params()
+
+        # create the queue
+        self.register_buffer("image_queue", torch.randn(768, 10000))
+        self.register_buffer("text_queue", torch.randn(768, 10000))
+        self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))  
+                             
+        self.image_queue = nn.functional.normalize(self.image_queue, dim=0)
+        self.text_queue = nn.functional.normalize(self.text_queue, dim=0)
+
+    def forward(self, title_input, title_mask, frame_input, frame_mask):
+        device = 'cuda'
+        alpha = 0.4
+        with torch.no_grad():
+            self.temp.clamp_(0.001,0.5)
+        frame_input_temp = (frame_input * frame_mask.unsqueeze(-1)).sum(1) / frame_mask.sum(1).unsqueeze(-1)
+        video_embeds_cls = self.video_transform(frame_input_temp)# video_embeds_cls 是进cross前的视频表征，算itc的时候需要用 
+        video_atts = frame_mask
+        
+        text_output = self.text_encoder(title_input, title_mask,output_hidden_states=True).hidden_states[-1]
+        
+        text_output_cls = (text_output * title_mask.unsqueeze(-1)).sum(1) / title_mask.sum(1).unsqueeze(-1)
+        text_output_cls = self.text_transform(text_output_cls) #text_output_cls是进cross前的文本表征，算itc的时候需要用 
+        
+        extend_image_masks = self.text_encoder.get_extended_attention_mask(frame_mask, frame_mask.size(), device)
+        extend_text_masks = self.text_encoder.get_extended_attention_mask(title_mask, title_mask.size(), device)
+        
+        # get momentum features
+        with torch.no_grad():
+            self._momentum_update() #把动量模型的权重更新一下
+            frame_input_temp_m = (frame_input * frame_mask.unsqueeze(-1)).sum(1) / frame_mask.sum(1).unsqueeze(-1)
+            video_embeds_cls_m = self.video_transform_m(frame_input_temp_m) #video_embeds_cls_m：bs,768
+            video_feat_all = torch.cat([video_embeds_cls_m.t(),self.image_queue.clone().detach()],dim=1)  #video_embeds_cls_m.t()：768,bs;self.image_queue:768,10000,cat后768,10000+bs    
+                                                  
+            text_output_m = self.text_encoder(title_input, title_mask,output_hidden_states=True).hidden_states[-1]
+            text_output_cls_m = (text_output_m * title_mask.unsqueeze(-1)).sum(1) / title_mask.sum(1).unsqueeze(-1)
+            text_output_cls_m = self.text_transform(text_output_cls_m)
+            text_feat_all = torch.cat([text_output_cls_m.t(),self.text_queue.clone().detach()],dim=1)
+
+            
+            sim_i2t_m = video_embeds_cls_m @ text_feat_all / self.temp #相似度直接通过矩阵相乘来代替
+            sim_t2i_m = text_output_cls_m @ video_feat_all / self.temp     
+
+            sim_targets = torch.zeros(sim_i2t_m.size()).to(title_input.device)
+            sim_targets.fill_diagonal_(1)#将对角线全部设为1          
+
+            sim_i2t_targets = alpha * F.softmax(sim_i2t_m, dim=1) + (1 - alpha) * sim_targets
+            sim_t2i_targets = alpha * F.softmax(sim_t2i_m, dim=1) + (1 - alpha) * sim_targets        
+
+        sim_i2t = video_embeds_cls @ text_feat_all / self.temp 
+        sim_t2i = text_output_cls  @ video_feat_all / self.temp 
+                             
+        loss_i2t = -torch.sum(F.log_softmax(sim_i2t, dim=1)*sim_i2t_targets,dim=1).mean()
+        loss_t2i = -torch.sum(F.log_softmax(sim_t2i, dim=1)*sim_t2i_targets,dim=1).mean() 
+
+        loss_ita = (loss_i2t+loss_t2i)/2
+
+        self._dequeue_and_enqueue(video_embeds_cls_m, text_output_cls_m)
+        
+        ###=================================###
+        # forward the positve image-text pair
+        text_embeds, image_embeds = (
+            text_output + self.token_type_embeddings(torch.zeros_like(title_mask)),
+            frame_input + self.token_type_embeddings(torch.full_like(frame_mask, 1)),
+        )
+        text_embeds = self.text_transform_2(text_embeds) #text_embeds：bs,maxlen,768
+        image_embeds = self.video_transform_2(image_embeds) #text_embeds：bs,frame,768
+        output_pos = image_embeds
+        for image_layer in self.cross_modal_image_layers:
+            output_pos = image_layer(output_pos, text_embeds, extend_image_masks, extend_text_masks)[0]
+        
+        
+        with torch.no_grad():
+            bs = text_embeds.size(0)          
+            weights_i2t = F.softmax(sim_i2t[:,:bs],dim=1) #weights_i2t是sim_i2t的权重
+            weights_t2i = F.softmax(sim_t2i[:,:bs],dim=1)
+   
+            weights_i2t.fill_diagonal_(0)#将对角线设为0
+            weights_t2i.fill_diagonal_(0)
+
+        # select a negative image for each text
+        image_embeds_neg = [] 
+        image_atts_neg = []
+        for b in range(bs):
+            neg_idx = torch.multinomial(weights_t2i[b], 1).item()
+            image_embeds_neg.append(image_embeds[neg_idx])
+            image_atts_neg.append(frame_mask[neg_idx])
+        image_embeds_neg = torch.stack(image_embeds_neg,dim=0) #image_embeds_neg顺序被打乱   
+        image_atts_neg = torch.stack(image_atts_neg,dim=0)    
+        
+        # select a negative text for each image
+        text_embeds_neg = []
+        text_atts_neg = []
+        for b in range(bs):
+            neg_idx = torch.multinomial(weights_i2t[b], 1).item()
+            text_embeds_neg.append(text_embeds[neg_idx])
+            text_atts_neg.append(title_mask[neg_idx])
+        text_embeds_neg = torch.stack(text_embeds_neg,dim=0)   #text_embeds_neg顺序被打乱   
+        text_atts_neg = torch.stack(text_atts_neg,dim=0)      
+
+        text_embeds_all = torch.cat([text_embeds, text_embeds_neg],dim=0)     
+        text_atts_all = torch.cat([title_mask, text_atts_neg],dim=0)     
+
+        image_embeds_all = torch.cat([image_embeds_neg,image_embeds],dim=0)
+        image_atts_all   = torch.cat([image_atts_neg,frame_mask],dim=0)
+        image_atts_all_extend_itc = self.text_encoder.get_extended_attention_mask(image_atts_all, image_atts_all.size(), device)
+        text_atts_all_extend_itc = self.text_encoder.get_extended_attention_mask(text_atts_all, text_atts_all.size(), device)
+        output_neg = image_embeds_all
+        for image_layer in self.cross_modal_image_layers:
+            output_neg = image_layer(output_neg, text_embeds_all, image_atts_all_extend_itc, text_atts_all_extend_itc)[0]
+        
+        output_pos = (output_pos * frame_mask.unsqueeze(-1)).sum(1) / frame_mask.sum(1).unsqueeze(-1)
+        output_neg = (output_neg * image_atts_all.unsqueeze(-1)).sum(1) / image_atts_all.sum(1).unsqueeze(-1)
+        vl_embeddings = torch.cat([output_pos,output_neg],dim=0)#shape:bs*3,768
+        vl_output = self.itm_head(vl_embeddings)#二分类，让模型判断是不是匹配的video-text对            
+
+        itm_labels = torch.cat([torch.ones(bs,dtype=torch.long),torch.zeros(2*bs,dtype=torch.long)],
+                               dim=0).to(output_pos.device) #itm的label，前bs个video-text对的label是1，后2bs个是0
+        loss_itm = F.cross_entropy(vl_output, itm_labels)
+        
+        ##================= MLM ========================##                
+        input_ids = title_input.clone()
+        labels = title_input.clone()
+
+        probability_matrix = torch.full(labels.shape, self.mlm_probability)                    
+        input_ids, labels = self.mask(input_ids, self.text_encoder.config.vocab_size, input_ids.device, targets=labels,
+                                      probability_matrix = probability_matrix) 
+        
+        with torch.no_grad():
+            logits_m = self.text_encoder_m(input_ids,attention_mask = title_mask,labels = labels)    
+        mlm_output = self.text_encoder(input_ids, attention_mask = title_mask,labels = labels)
+        prediction_scores = mlm_output[1]
+        masked_lm_loss =  mlm_output[0]
+        soft_labels = F.softmax(logits_m[1],dim=-1) #动量模型预测的label，只是softmax软标签形式
+        loss_distill = -torch.sum(F.log_softmax(prediction_scores, dim=-1)*soft_labels,dim=-1) #由于albef的BertForMaskedLM封装了计算soft label带来的损失，huggingface上没有，因此得手写一下这部分
+        loss_distill = loss_distill[labels!=-100].mean()#prediction_scores是正常的模型的输出，soft_labels是动量模型的输出
+        
+        masked_lm_loss = (1-alpha)*masked_lm_loss + alpha*loss_distill
+        return masked_lm_loss, loss_ita, loss_itm 
+    
+    #from albef，copy_params复制初始权重给动量模型的参数
+    @torch.no_grad()    
+    def copy_params(self):
+        for model_pair in self.model_pairs:           
+            for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()):
+                param_m.data.copy_(param.data)  # initialize
+                param_m.requires_grad = False  # not update by gradient    
+
+            
+    @torch.no_grad() #动量模型的权重的更新不是通过训练，而是正常模型param的指数移动平均  
+    def _momentum_update(self):
+        for model_pair in self.model_pairs:           
+            for param, param_m in zip(model_pair[0].parameters(), model_pair[1].parameters()): #遍历每一组的所有的参数
+                param_m.data = param_m.data * self.momentum + param.data * (1. - self.momentum)
+    
+    @torch.no_grad()
+    def _dequeue_and_enqueue(self, image_feat, text_feat):
+        # gather keys before updating queue
+        image_feats = concat_all_gather(image_feat)
+        text_feats = concat_all_gather(text_feat)
+
+        batch_size = image_feats.shape[0]
+
+        ptr = int(self.queue_ptr)
+        assert self.queue_size % batch_size == 0  # for simplicity
+
+        # replace the keys at ptr (dequeue and enqueue)
+        self.image_queue[:, ptr:ptr + batch_size] = image_feats.T #替换掉一个batch内的内容
+        self.text_queue[:, ptr:ptr + batch_size] = text_feats.T
+        ptr = (ptr + batch_size) % self.queue_size  # move pointer #指针循环移动
+
+        self.queue_ptr[0] = ptr       
+        
+    def mask(self, input_ids, vocab_size, device, targets=None, masked_indices=None, probability_matrix=None):
+        if masked_indices is None:                                       
+            masked_indices = torch.bernoulli(probability_matrix).bool()
+        pad_token_id = 0   
+        cls_token_id = 101
+        mask_token_id = 103
+        masked_indices[input_ids == pad_token_id] = False
+        masked_indices[input_ids == cls_token_id] = False
+        
+        if targets is not None:
+            targets[~masked_indices] = -100 # We only compute loss on masked tokens            
+
+        # 80% of the time, we replace masked input tokens with tokenizer.mask_token ([MASK])
+        indices_replaced = torch.bernoulli(torch.full(input_ids.shape, 0.8)).bool() & masked_indices
+        input_ids[indices_replaced] = mask_token_id
+
+        # 10% of the time, we replace masked input tokens with random word
+        indices_random = torch.bernoulli(torch.full(input_ids.shape, 0.5)).bool() & masked_indices & ~indices_replaced
+        random_words = torch.randint(vocab_size, input_ids.shape, dtype=torch.long).to(device)
+        input_ids[indices_random] = random_words[indices_random]                     
+        # The rest of the time (10% of the time) we keep the masked input tokens unchanged   
+        
+        if targets is not None:
+            return input_ids, targets
+        else:
+            return input_ids
+@torch.no_grad()
+def concat_all_gather(tensor):#把多卡的tensor聚合起来，后面一起替换掉队列当中的内容
+    """
+    Performs all_gather operation on the provided tensors.
+    *** Warning ***: torch.distributed.all_gather has no gradient.
+    """
+    tensors_gather = [torch.ones_like(tensor)
+        for _ in range(torch.distributed.get_world_size())]
+    torch.distributed.all_gather(tensors_gather, tensor, async_op=False)
+
+    output = torch.cat(tensors_gather, dim=0)
+    return output
+2022-07-29 13:13:01 - INFO - 
+
+
+
+
+
+
+2022-07-29 13:13:01 - INFO - Config - pretrain:
+import logging
+import random
+import os
+import numpy as np
+from sklearn.metrics import f1_score, accuracy_score
+import torch
+from transformers import AdamW,get_cosine_schedule_with_warmup,get_linear_schedule_with_warmup
+from util import *
+from category_id_map import lv2id_to_lv1id
+from pretrain_cfg import *
+
+def setup_device(args):
+    args.device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    args.n_gpu = torch.cuda.device_count()
+
+
+def setup_seed(args):
+    '''
+    设置整个开发环境的seed
+    :param seed:
+    :param device:
+    :return:
+    '''
+    random.seed(args.seed)
+    os.environ['PYTHONHASHSEED'] = str(args.seed)
+    np.random.seed(args.seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    # some cudnn methods can be random even after fixing the seed
+    # unless you tell it to be deterministic
+    torch.backends.cudnn.deterministic = True
+
+
+
+def setup_logging(args):
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
+                        filename='./pretrain.log',
+                        filemode='w',  ##模式，有w和a，w就是写模式，每次都会重新写日志，覆盖之前的日志
+                        datefmt='%Y-%m-%d %H:%M:%S',
+                        level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    return logger
+
+
+def build_optimizer(args, model,per_data_loader_len,logging):
+    # Prepare optimizer and schedule (linear warmup and decay)
+    no_decay = ["bias", "LayerNorm.weight"]
+    optimizer_grouped_parameters = []
+    optimizer_grouped_parameters_name = []
+    epsion = 1.0
+    #===================bert的分层学习率=========================================
+    
+    for i in range(args.text_transforemr_layers-1,-1,-1):
+        if i != 1:    #主要在于layer.1和layer.10 layer.11这两个，匹配的话，不加if这个判断会导致在i = 1的时候，将layer.10的参数也包含进来了
+            tmp = [
+            {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and f'layer.{i}' in n],'weight_decay': args.weight_decay,'lr':args.learning_rate*epsion},
+
+            {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and f'layer.{i}' in n], 'weight_decay': 0.0,'lr':args.learning_rate*epsion}]
+            optimizer_grouped_parameters.extend(tmp)
+
+            tmp =  [n for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and f'layer.{i}' in n]
+
+            optimizer_grouped_parameters_name.extend(tmp)    
+            tmp2 = [n for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and f'layer.{i}' in n]
+        else:
+            tmp = [
+            {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and 'layer.1' in n and 'layer.10' not in n  and 'layer.11' not in n],'weight_decay': args.weight_decay,'lr':args.learning_rate*epsion},
+
+            {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and 'layer.1' in n and 'layer.10'   not in n and 'layer.11' not in n], 'weight_decay': 0.0,'lr':args.learning_rate*epsion}]
+            optimizer_grouped_parameters.extend(tmp)
+
+            tmp =  [n for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and 'layer.1' in n and 'layer.10'   not in n and 'layer.11' not in n]
+
+            optimizer_grouped_parameters_name.extend(tmp)    
+            tmp2 = [n for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'visual_backbone' not in n and 'cross_modal' not in n and 'layer.1' in n and 'layer.10'   not in n and 'layer.11' not in n]
+        if args.local_rank ==0:
+            print(f'============================bert layer:{i}下面这些参数的学习率是:',args.learning_rate*epsion)
+            print(tmp)
+            print(tmp2)
+            logging.info(f'============================bert layer:{i}下面这些参数的学习率是:{args.learning_rate*epsion}')
+            logging.info(str(tmp))
+            logging.info(str(tmp2))
+        optimizer_grouped_parameters_name.extend(tmp2)    
+        epsion *= 0.95
+    '''
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    '''
+    logging.info('''
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    ''')
+    #===================bert的embedding分层学习率=========================================
+    tmp = [
+        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'embeddings' in n],'weight_decay': args.weight_decay,'lr':args.learning_rate*epsion},
+            
+        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'embeddings' in n], 'weight_decay': 0.0,'lr':args.learning_rate*epsion}]
+    optimizer_grouped_parameters.extend(tmp)
+    
+    tmp = [n for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'embeddings' in n]
+    optimizer_grouped_parameters_name.extend(tmp)         
+    tmp2 =    [n for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'embeddings' in n]
+    if args.local_rank ==0:
+        print(f'============================bert embedding下面这些参数的学习率是:',args.learning_rate*epsion)
+        print(tmp)
+        print(tmp2)
+        logging.info(f'============================bert embedding下面这些参数的学习率是:{args.learning_rate*epsion}')
+        logging.info(str(tmp))
+        logging.info(str(tmp2))
+    optimizer_grouped_parameters_name.extend(tmp2)
+    '''
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    '''
+    logging.info('''
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    ''')
+    #===================cross_modal_image_layers分层学习率========================================= 
+    epsion = 1.0
+    for i in range(args.num_top_layer-1,-1,-1):
+        tmp = [
+        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'cross_modal' in n and f'layers.{i}' in n],'weight_decay': args.weight_decay,'lr':args.vison_learning_rate*epsion},
+            
+        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'cross_modal' in n and f'layers.{i}' in n], 'weight_decay': 0.0,'lr':args.vison_learning_rate*epsion}]
+        optimizer_grouped_parameters.extend(tmp)
+        
+        tmp = [n for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and 'cross_modal' in n and f'layers.{i}' in n]
+        
+        optimizer_grouped_parameters_name.extend(tmp)    
+        tmp2 =  [n for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and 'cross_modal' in n and f'layers.{i}' in n]
+        if args.local_rank ==0:
+                print(f'============================cross_modal_image_layers:{i}下面这些参数的学习率是:',args.vison_learning_rate*epsion)
+                print(tmp)
+                print(tmp2)
+                logging.info(f'============================cross_modal_image_layers:{i}下面这些参数的学习率是:{args.vison_learning_rate*epsion}')
+                logging.info(str(tmp))
+                logging.info(str(tmp2))
+        optimizer_grouped_parameters_name.extend(tmp2)
+        
+        epsion *= 0.93
+    
+    '''
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    '''
+    logging.info('''
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    ''')
+    #===================itm 和 mlm 分类的学习率========================================= 
+    tmp = [
+        {'params': [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and ('itm' in n or 'cls' in n)],'weight_decay': args.weight_decay,'lr':args.classifier_learning_rate},
+            
+        {'params': [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and ('itm' in n or 'cls' in n)], 'weight_decay': 0.0,'lr':args.classifier_learning_rate}]
+    optimizer_grouped_parameters.extend(tmp)
+    
+    tmp = [n for n, p in model.named_parameters() if not any(nd in n for nd in no_decay) and ('itm' in n  or 'cls' in n)]
+    optimizer_grouped_parameters_name.extend(tmp)        
+    tmp2 =  [n for n, p in model.named_parameters() if any(nd in n for nd in no_decay) and ('itm' in n  or 'cls' in n)]
+    if args.local_rank ==0:
+            print(f'============================itm mfm下面这些参数的学习率是:',args.classifier_learning_rate)
+            print(tmp)
+            print(tmp2)
+            logging.info(f'============================itm mfm下面这些参数的学习率是:{args.classifier_learning_rate}')
+            logging.info(str(tmp))
+            logging.info(str(tmp2))
+    optimizer_grouped_parameters_name.extend(tmp2)
+    
+    params = list(model.named_parameters())
+    all_params = [n for n,p in params]
+    a = set(optimizer_grouped_parameters_name)
+    c = []
+    for x in a:
+        if x not in c:
+            c.append(x)
+        else:
+            print(x)
+    
+    b = set(all_params)
+    if a == b:
+        if args.local_rank ==0:
+            print('=====================参数都囊括到我们的分组啦=====================')
+            logging.info('=====================参数都囊括到我们的分组啦=====================')
+    else:
+        if args.local_rank ==0:
+            print('=====================参数不在我们的分组有=====================')
+            logging.info('=====================参数不在我们的分组有=====================')
+            print(b - a)
+            logging.info(str(b-a))
+            print(f'===================他们的学习率将设为默认的{args.classifier_learning_rate}=========================')
+            logging.info(f'===================他们的学习率将设为默认的{args.classifier_learning_rate}=========================')
+    if args.local_rank ==0:
+        print(f'==================total steps[{per_data_loader_len*NUM_EPOCHS}]====================warm steps[{int(per_data_loader_len*NUM_EPOCHS*WARMUP_RATIO)}]==================')
+    optimizer = AdamW(optimizer_grouped_parameters, lr=args.classifier_learning_rate, eps=args.adam_epsilon)
+    scheduler = get_cosine_schedule_with_warmup(optimizer, num_warmup_steps=int(per_data_loader_len*NUM_EPOCHS*WARMUP_RATIO),
+                                                num_training_steps=per_data_loader_len*NUM_EPOCHS)
+    return optimizer, scheduler
+
+
+def evaluate(predictions, labels):
+    # prediction and labels are all level-2 class ids
+
+    lv1_preds = [lv2id_to_lv1id(lv2id) for lv2id in predictions]
+    lv1_labels = [lv2id_to_lv1id(lv2id) for lv2id in labels]
+
+    lv2_f1_micro = f1_score(labels, predictions, average='micro')
+    lv2_f1_macro = f1_score(labels, predictions, average='macro')
+    lv1_f1_micro = f1_score(lv1_labels, lv1_preds, average='micro')
+    lv1_f1_macro = f1_score(lv1_labels, lv1_preds, average='macro')
+    mean_f1 = (lv2_f1_macro + lv1_f1_macro + lv1_f1_micro + lv2_f1_micro) / 4.0
+
+    eval_results = {'lv1_acc': accuracy_score(lv1_labels, lv1_preds),
+                    'lv2_acc': accuracy_score(labels, predictions),
+                    'lv1_f1_micro': lv1_f1_micro,
+                    'lv1_f1_macro': lv1_f1_macro,
+                    'lv2_f1_micro': lv2_f1_micro,
+                    'lv2_f1_macro': lv2_f1_macro,
+                    'mean_f1': mean_f1}
+
+    return eval_results
+2022-07-29 13:13:01 - INFO - 
+
+
+
+
+
+
+2022-07-29 13:13:01 - INFO - Config - pretrain:
+#%%writefile pretrain.py
+import os, math, random, time, sys, gc,  sys, json, psutil
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+import logging
+import torch.backends.cudnn as cudnn
+import torch.distributed as dist
+import torch.utils.data.distributed
+from time import strftime
+
+import numpy as np
+import pandas as pd
+from transformers import get_cosine_schedule_with_warmup
+
+from pretrain_cfg import *
+
+from model_pretrain import *
+
+from util import *
+from functools import partial
+
+from config import parse_args
+import torch
+import torch.nn as nn
+import warnings
+warnings.filterwarnings("ignore")
+
+from transformers import get_cosine_schedule_with_warmup
+from data_helper import *
+gc.enable()
+    
+DEVICE = 'cuda'           
+def reduce_mean(tensor, nprocs):
+    nprocs = 2
+    rt = tensor.clone()
+    dist.all_reduce(rt, op=dist.ReduceOp.SUM) #数据规约，先对loss求和，再除GPU数
+    rt /= nprocs
+    return rt
+
+
+class AverageMeter:  # 为了tqdm实时显示loss和acc
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count
+        
+
+        
+def get_pred_and_loss(model, item, task=None):
+    video_feature = item['frame_input'].cuda()
+    input_ids = item['title_input'].cuda()
+    attention_mask = item['title_mask'].cuda()
+    video_mask = item['frame_mask'].cuda()
+    text_tokne_type = item['text_token_type'].cuda()
+    video_token_type = item['video_token_type'].cuda()
+    
+    masked_lm_loss, loss_ita, loss_itm  = model(input_ids, attention_mask,video_feature, video_mask)
+    return masked_lm_loss, loss_ita, loss_itm 
+
+
+from tqdm import tqdm
+def train(model, train_loader,train_sampler,optimizer, get_pred_and_loss,batch_size,scheduler=None, num_epochs=5,device=0):
+    best_val_loss, best_epoch, step = None, 0, 0
+    start = time.time()
+    scaler = torch.cuda.amp.GradScaler()
+    autocast = torch.cuda.amp.autocast
+    #ema = EMA(model, 0.999) #历史200个step的指数平均
+    #ema.register()
+    cnt = 0
+    cnt2 = 0
+    if device == 0:
+        logging.info(f"total step={num_epochs*len(train_loader)}\t one epoch step={len(train_loader)}")
+    for epoch in tqdm(range(num_epochs)):
+        train_loss = AverageMeter()
+        mlm_losses = AverageMeter()
+        itm_losses = AverageMeter()
+        itc_losses = AverageMeter()
+        pbar = tqdm(train_loader)
+        for item in pbar:
+            model.train()
+            optimizer.zero_grad()
+            with autocast():
+                masked_lm_loss, loss_ita, loss_itm  = get_pred_and_loss(model, item)
+                loss = masked_lm_loss + loss_ita + loss_itm
+            #同步等待另一张卡前向计算完
+            torch.distributed.barrier()
+            reduced_loss = reduce_mean(loss, args.nprocs)  #把loss平均一下
+            scaler.scale(reduced_loss).backward()
+
+            train_loss.update(loss.item(),batch_size)
+            itm_losses.update(loss_itm.item(),batch_size)
+            itc_losses.update(loss_ita.item(),batch_size)
+            mlm_losses.update(masked_lm_loss.item(),batch_size)
+            scaler.step(optimizer)
+            scaler.update()
+            #ema.update()
+            if scheduler:
+                scheduler.step()   
+            step += 1
+            cnt +=1
+            cnt2 += 1
+            pbar.set_postfix(epoch=epoch,total_loss = train_loss.avg ,itm_loss = itm_losses.avg ,itc_loss = itc_losses.avg,mlm_loss = mlm_losses.avg,lr=optimizer.param_groups[4]['lr'])
+            if device == 0:
+                if (step + 1) % 100 == 0 and step > 0:
+                    logging.info(f"Epoch={epoch + 1}/{num_epochs} \t step={step:3} \t total_loss={train_loss.avg:6.4},itm_loss={itm_losses.avg:6.4},mlm_loss={mlm_losses.avg:6.4},itc_loss={itc_losses.avg:6.4}")
+        
+        #ema.apply_shadow()
+        if device == 0:
+            torch.save(model.state_dict(), f'./checkpoint/model_epoch_{epoch}_step_{step}_total_loss_{train_loss.avg:6.4}.pth')
+            checkpoint = {
+                "net": model.state_dict(),
+                'optimizer':optimizer.state_dict(),
+                "epoch": epoch,
+                'scheduler': scheduler.state_dict()
+            }
+            torch.save(checkpoint, f'model_optimizer_schduler_epoch_{epoch}')
+        #ema.restore()
+
+        
+        
+        
+import argparse
+def parse_args_for_ddp():
+    parser = argparse.ArgumentParser(description="Baseline for Weixin Challenge 2022")
+    parser.add_argument('--local_rank',default=-1,type=int,help='node rank for distributed training')
+    return parser.parse_args()
+if __name__ == "__main__":
+    args_ddp = parse_args_for_ddp()
+    dist.init_process_group(backend='nccl')
+    # 提升速度，主要对input shape是固定时有效，如果是动态的，耗时反而慢
+    cudnn.benchmark = True
+    print('this is the gpu local_rank:',args_ddp.local_rank)
+    args_ddp.nprocs = torch.cuda.device_count()
+    device = args_ddp.local_rank    
+    torch.cuda.set_device(args_ddp.local_rank)  #设置当前cuda是几号设备
+    
+    
+    args = parse_args()
+    args.local_rank = args_ddp.local_rank
+    args.nprocs = args_ddp.nprocs
+    #batch_size = BATCH_SIZE // args_ddp.nprocs  #为了均衡负载每个GPU的batch数
+    
+    setup_seed(args)
+    if  device == 0:
+        print('分布式训练后端启动成功')
+        print('nprocs:',args.nprocs)
+        setup_logging(args)
+        logging.info("Training/evaluation parameters: %s", args)
+        logging.info("Start")
+        for fname in ['pretrain']:
+            logging.info('=' * 66)
+            with open('pretrain_cfg.py') as f:
+                logging.info(f"Config - {fname}:" + '\n' + f.read().strip())
+            logging.info('\n\n\n\n\n\n')
+            with open('config.py') as f:
+                logging.info(f"Config - {fname}:" + '\n' + f.read().strip())
+            logging.info('\n\n\n\n\n\n')
+            with open('model_pretrain.py') as f:
+                logging.info(f"Config - {fname}:" + '\n' + f.read().strip())
+            logging.info('\n\n\n\n\n\n')
+            with open('util.py') as f:
+                logging.info(f"Config - {fname}:" + '\n' + f.read().strip())
+            logging.info('\n\n\n\n\n\n')
+            with open('pretrain.py') as f:
+                logging.info(f"Config - {fname}:" + '\n' + f.read().strip())
+            logging.info('\n\n\n\n\n\n')
+            
+            
+
+        
+
+        logging.info("Load data into memory")
+    m0 = psutil.Process(os.getpid()).memory_info()[0] / 2. ** 30
+    #### 把100w无标注的和10w有标注的利用pandas把annation合并到一起 ####
+    with open(args.train_annotation, 'r', encoding='utf8') as f:
+        json_anns = json.load(f)
+    train_df = pd.DataFrame(json_anns)
+    train_df['raw_index'] = [x for x in range(len(train_df))]
+    
+    
+    with open(args.unlabeld_annotation, 'r', encoding='utf8') as f:
+        json_anns = json.load(f)
+    unlabeld_df = pd.DataFrame(json_anns)
+    unlabeld_df['raw_index'] = [x for x in range(len(unlabeld_df))]
+    
+    train_df.drop(['category_id'],axis=1,inplace=True)
+    train_df['is_train'] = 1
+    unlabeld_df['is_train'] = 0
+    print(unlabeld_df.shape)
+    print(train_df.shape)
+    df = pd.concat((unlabeld_df,train_df)).reset_index(drop=True)
+    if  device == 0:
+        print(f'============================训练集的样本数:{len(df)}==================================')
+        logging.info(f'============================训练集的样本数:{len(df)}==================================')
+        
+    if args.num_workers > 0:
+            dataloader_class = partial(DataLoader, pin_memory=True, num_workers=args.num_workers)
+    else:
+        # single-thread reading does not support prefetch_factor arg
+        dataloader_class = partial(DataLoader, pin_memory=True, num_workers=0)
+    #创建dataset and dataloader
+    train_dataset = MultiModalDataset(args,df)
+    #分布式环境的sampler and dataloader
+    train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,seed=2022,drop_last=True)
+    
+    train_dataloader = dataloader_class(train_dataset,
+                                        batch_size=BATCH_SIZE // args_ddp.nprocs,
+                                        sampler=train_sampler,
+                                        drop_last=True)
+    total_steps = NUM_EPOCHS * len(train_dataloader.dataset)
+    warmup_steps = int(WARMUP_RATIO * total_steps)
+    if  device == 0:
+        logging.info(f"len(train_loader)={len(train_dataloader)}")
+        delta_mem = psutil.Process(os.getpid()).memory_info()[0] / 2. ** 30 - m0
+        logging.info(f"Dataset used memory = {delta_mem:.1f}GB")
+        logging.info(f'Total train steps={total_steps}, warmup steps={warmup_steps}')
+    
+    model = Clip_Vit_Cross_Model_Pretrain(args.bert_dir,args.num_top_layer).cuda()
+    model = torch.nn.parallel.DistributedDataParallel(model,
+                                                      device_ids=[device],find_unused_parameters=True)
+    
+    optimizer, scheduler = build_optimizer(args, model, len(train_dataloader),logging)
+    train(model,train_dataloader,train_sampler,optimizer,
+                             get_pred_and_loss=get_pred_and_loss,
+                             scheduler=scheduler, num_epochs=NUM_EPOCHS,batch_size=BATCH_SIZE// args_ddp.nprocs,device=device)
+2022-07-29 13:13:01 - INFO - 
+
+
+
+
+
+
+2022-07-29 13:13:01 - INFO - Load data into memory
+2022-07-29 13:13:25 - INFO - ============================训练集的样本数:1100000==================================
+2022-07-29 13:13:25 - INFO - len(train_loader)=13750
+2022-07-29 13:13:25 - INFO - Dataset used memory = 2.8GB
+2022-07-29 13:13:25 - INFO - Total train steps=8800000, warmup steps=1320000
+2022-07-29 13:13:31 - INFO - ============================bert layer:11下面这些参数的学习率是:5e-05
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.11.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.11.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.11.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.11.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.11.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.11.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.11.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.11.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.11.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.11.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.11.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.11.output.dense.weight']
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.11.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.11.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.11.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.11.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.11.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.11.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.11.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.11.output.dense.bias', 'module.text_encoder.bert.encoder.layer.11.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.11.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.11.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.11.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.11.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.11.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.11.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.11.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.11.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.11.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.11.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.11.output.LayerNorm.bias']
+2022-07-29 13:13:31 - INFO - ============================bert layer:10下面这些参数的学习率是:4.75e-05
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.10.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.10.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.10.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.10.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.10.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.10.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.10.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.10.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.10.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.10.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.10.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.10.output.dense.weight']
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.10.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.10.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.10.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.10.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.10.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.10.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.10.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.10.output.dense.bias', 'module.text_encoder.bert.encoder.layer.10.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.10.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.10.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.10.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.10.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.10.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.10.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.10.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.10.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.10.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.10.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.10.output.LayerNorm.bias']
+2022-07-29 13:13:31 - INFO - ============================bert layer:9下面这些参数的学习率是:4.5125e-05
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.9.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.9.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.9.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.9.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.9.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.9.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.9.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.9.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.9.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.9.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.9.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.9.output.dense.weight']
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.9.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.9.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.9.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.9.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.9.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.9.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.9.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.9.output.dense.bias', 'module.text_encoder.bert.encoder.layer.9.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.9.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.9.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.9.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.9.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.9.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.9.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.9.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.9.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.9.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.9.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.9.output.LayerNorm.bias']
+2022-07-29 13:13:31 - INFO - ============================bert layer:8下面这些参数的学习率是:4.2868749999999995e-05
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.8.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.8.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.8.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.8.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.8.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.8.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.8.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.8.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.8.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.8.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.8.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.8.output.dense.weight']
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.8.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.8.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.8.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.8.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.8.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.8.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.8.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.8.output.dense.bias', 'module.text_encoder.bert.encoder.layer.8.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.8.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.8.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.8.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.8.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.8.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.8.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.8.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.8.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.8.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.8.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.8.output.LayerNorm.bias']
+2022-07-29 13:13:31 - INFO - ============================bert layer:7下面这些参数的学习率是:4.07253125e-05
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.7.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.7.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.7.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.7.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.7.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.7.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.7.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.7.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.7.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.7.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.7.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.7.output.dense.weight']
+2022-07-29 13:13:31 - INFO - ['module.text_encoder.bert.encoder.layer.7.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.7.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.7.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.7.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.7.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.7.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.7.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.7.output.dense.bias', 'module.text_encoder.bert.encoder.layer.7.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.7.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.7.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.7.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.7.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.7.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.7.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.7.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.7.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.7.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.7.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.7.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:6下面这些参数的学习率是:3.8689046875e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.6.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.6.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.6.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.6.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.6.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.6.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.6.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.6.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.6.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.6.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.6.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.6.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.6.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.6.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.6.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.6.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.6.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.6.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.6.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.6.output.dense.bias', 'module.text_encoder.bert.encoder.layer.6.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.6.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.6.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.6.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.6.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.6.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.6.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.6.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.6.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.6.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.6.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.6.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:5下面这些参数的学习率是:3.675459453124999e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.5.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.5.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.5.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.5.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.5.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.5.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.5.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.5.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.5.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.5.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.5.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.5.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.5.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.5.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.5.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.5.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.5.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.5.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.5.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.5.output.dense.bias', 'module.text_encoder.bert.encoder.layer.5.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.5.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.5.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.5.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.5.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.5.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.5.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.5.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.5.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.5.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.5.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.5.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:4下面这些参数的学习率是:3.4916864804687486e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.4.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.4.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.4.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.4.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.4.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.4.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.4.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.4.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.4.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.4.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.4.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.4.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.4.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.4.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.4.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.4.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.4.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.4.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.4.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.4.output.dense.bias', 'module.text_encoder.bert.encoder.layer.4.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.4.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.4.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.4.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.4.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.4.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.4.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.4.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.4.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.4.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.4.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.4.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:3下面这些参数的学习率是:3.3171021564453116e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.3.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.3.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.3.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.3.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.3.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.3.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.3.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.3.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.3.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.3.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.3.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.3.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.3.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.3.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.3.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.3.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.3.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.3.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.3.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.3.output.dense.bias', 'module.text_encoder.bert.encoder.layer.3.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.3.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.3.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.3.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.3.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.3.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.3.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.3.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.3.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.3.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.3.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.3.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:2下面这些参数的学习率是:3.151247048623045e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.2.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.2.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.2.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.2.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.2.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.2.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.2.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.2.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.2.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.2.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.2.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.2.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.2.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.2.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.2.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.2.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.2.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.2.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.2.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.2.output.dense.bias', 'module.text_encoder.bert.encoder.layer.2.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.2.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.2.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.2.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.2.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.2.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.2.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.2.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.2.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.2.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.2.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.2.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:1下面这些参数的学习率是:2.993684696191893e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.1.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.1.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.1.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.1.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.1.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.1.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.1.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.1.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.1.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.1.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.1.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.1.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.1.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.1.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.1.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.1.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.1.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.1.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.1.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.1.output.dense.bias', 'module.text_encoder.bert.encoder.layer.1.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.1.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.1.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.1.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.1.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.1.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.1.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.1.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.1.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.1.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.1.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.1.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================bert layer:0下面这些参数的学习率是:2.844000461382298e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.0.attention.self.query.weight', 'module.text_encoder.bert.encoder.layer.0.attention.self.key.weight', 'module.text_encoder.bert.encoder.layer.0.attention.self.value.weight', 'module.text_encoder.bert.encoder.layer.0.attention.output.dense.weight', 'module.text_encoder.bert.encoder.layer.0.intermediate.dense.weight', 'module.text_encoder.bert.encoder.layer.0.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.0.attention.self.query.weight', 'module.text_encoder_m.bert.encoder.layer.0.attention.self.key.weight', 'module.text_encoder_m.bert.encoder.layer.0.attention.self.value.weight', 'module.text_encoder_m.bert.encoder.layer.0.attention.output.dense.weight', 'module.text_encoder_m.bert.encoder.layer.0.intermediate.dense.weight', 'module.text_encoder_m.bert.encoder.layer.0.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.encoder.layer.0.attention.self.query.bias', 'module.text_encoder.bert.encoder.layer.0.attention.self.key.bias', 'module.text_encoder.bert.encoder.layer.0.attention.self.value.bias', 'module.text_encoder.bert.encoder.layer.0.attention.output.dense.bias', 'module.text_encoder.bert.encoder.layer.0.attention.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.0.attention.output.LayerNorm.bias', 'module.text_encoder.bert.encoder.layer.0.intermediate.dense.bias', 'module.text_encoder.bert.encoder.layer.0.output.dense.bias', 'module.text_encoder.bert.encoder.layer.0.output.LayerNorm.weight', 'module.text_encoder.bert.encoder.layer.0.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.0.attention.self.query.bias', 'module.text_encoder_m.bert.encoder.layer.0.attention.self.key.bias', 'module.text_encoder_m.bert.encoder.layer.0.attention.self.value.bias', 'module.text_encoder_m.bert.encoder.layer.0.attention.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.0.attention.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.0.attention.output.LayerNorm.bias', 'module.text_encoder_m.bert.encoder.layer.0.intermediate.dense.bias', 'module.text_encoder_m.bert.encoder.layer.0.output.dense.bias', 'module.text_encoder_m.bert.encoder.layer.0.output.LayerNorm.weight', 'module.text_encoder_m.bert.encoder.layer.0.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - 
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    
+2022-07-29 13:13:32 - INFO - ============================bert embedding下面这些参数的学习率是:2.701800438313183e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.embeddings.word_embeddings.weight', 'module.text_encoder.bert.embeddings.position_embeddings.weight', 'module.text_encoder.bert.embeddings.token_type_embeddings.weight', 'module.token_type_embeddings.weight', 'module.text_encoder_m.bert.embeddings.word_embeddings.weight', 'module.text_encoder_m.bert.embeddings.position_embeddings.weight', 'module.text_encoder_m.bert.embeddings.token_type_embeddings.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.bert.embeddings.LayerNorm.weight', 'module.text_encoder.bert.embeddings.LayerNorm.bias', 'module.text_encoder_m.bert.embeddings.LayerNorm.weight', 'module.text_encoder_m.bert.embeddings.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - 
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    
+2022-07-29 13:13:32 - INFO - ============================cross_modal_image_layers:3下面这些参数的学习率是:6e-05
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.3.attention.self.query.weight', 'module.cross_modal_image_layers.3.attention.self.key.weight', 'module.cross_modal_image_layers.3.attention.self.value.weight', 'module.cross_modal_image_layers.3.attention.output.dense.weight', 'module.cross_modal_image_layers.3.crossattention.self.query.weight', 'module.cross_modal_image_layers.3.crossattention.self.key.weight', 'module.cross_modal_image_layers.3.crossattention.self.value.weight', 'module.cross_modal_image_layers.3.crossattention.output.dense.weight', 'module.cross_modal_image_layers.3.intermediate.dense.weight', 'module.cross_modal_image_layers.3.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.3.attention.self.query.bias', 'module.cross_modal_image_layers.3.attention.self.key.bias', 'module.cross_modal_image_layers.3.attention.self.value.bias', 'module.cross_modal_image_layers.3.attention.output.dense.bias', 'module.cross_modal_image_layers.3.attention.output.LayerNorm.weight', 'module.cross_modal_image_layers.3.attention.output.LayerNorm.bias', 'module.cross_modal_image_layers.3.crossattention.self.query.bias', 'module.cross_modal_image_layers.3.crossattention.self.key.bias', 'module.cross_modal_image_layers.3.crossattention.self.value.bias', 'module.cross_modal_image_layers.3.crossattention.output.dense.bias', 'module.cross_modal_image_layers.3.crossattention.output.LayerNorm.weight', 'module.cross_modal_image_layers.3.crossattention.output.LayerNorm.bias', 'module.cross_modal_image_layers.3.intermediate.dense.bias', 'module.cross_modal_image_layers.3.output.dense.bias', 'module.cross_modal_image_layers.3.output.LayerNorm.weight', 'module.cross_modal_image_layers.3.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================cross_modal_image_layers:2下面这些参数的学习率是:5.58e-05
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.2.attention.self.query.weight', 'module.cross_modal_image_layers.2.attention.self.key.weight', 'module.cross_modal_image_layers.2.attention.self.value.weight', 'module.cross_modal_image_layers.2.attention.output.dense.weight', 'module.cross_modal_image_layers.2.crossattention.self.query.weight', 'module.cross_modal_image_layers.2.crossattention.self.key.weight', 'module.cross_modal_image_layers.2.crossattention.self.value.weight', 'module.cross_modal_image_layers.2.crossattention.output.dense.weight', 'module.cross_modal_image_layers.2.intermediate.dense.weight', 'module.cross_modal_image_layers.2.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.2.attention.self.query.bias', 'module.cross_modal_image_layers.2.attention.self.key.bias', 'module.cross_modal_image_layers.2.attention.self.value.bias', 'module.cross_modal_image_layers.2.attention.output.dense.bias', 'module.cross_modal_image_layers.2.attention.output.LayerNorm.weight', 'module.cross_modal_image_layers.2.attention.output.LayerNorm.bias', 'module.cross_modal_image_layers.2.crossattention.self.query.bias', 'module.cross_modal_image_layers.2.crossattention.self.key.bias', 'module.cross_modal_image_layers.2.crossattention.self.value.bias', 'module.cross_modal_image_layers.2.crossattention.output.dense.bias', 'module.cross_modal_image_layers.2.crossattention.output.LayerNorm.weight', 'module.cross_modal_image_layers.2.crossattention.output.LayerNorm.bias', 'module.cross_modal_image_layers.2.intermediate.dense.bias', 'module.cross_modal_image_layers.2.output.dense.bias', 'module.cross_modal_image_layers.2.output.LayerNorm.weight', 'module.cross_modal_image_layers.2.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================cross_modal_image_layers:1下面这些参数的学习率是:5.189400000000001e-05
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.1.attention.self.query.weight', 'module.cross_modal_image_layers.1.attention.self.key.weight', 'module.cross_modal_image_layers.1.attention.self.value.weight', 'module.cross_modal_image_layers.1.attention.output.dense.weight', 'module.cross_modal_image_layers.1.crossattention.self.query.weight', 'module.cross_modal_image_layers.1.crossattention.self.key.weight', 'module.cross_modal_image_layers.1.crossattention.self.value.weight', 'module.cross_modal_image_layers.1.crossattention.output.dense.weight', 'module.cross_modal_image_layers.1.intermediate.dense.weight', 'module.cross_modal_image_layers.1.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.1.attention.self.query.bias', 'module.cross_modal_image_layers.1.attention.self.key.bias', 'module.cross_modal_image_layers.1.attention.self.value.bias', 'module.cross_modal_image_layers.1.attention.output.dense.bias', 'module.cross_modal_image_layers.1.attention.output.LayerNorm.weight', 'module.cross_modal_image_layers.1.attention.output.LayerNorm.bias', 'module.cross_modal_image_layers.1.crossattention.self.query.bias', 'module.cross_modal_image_layers.1.crossattention.self.key.bias', 'module.cross_modal_image_layers.1.crossattention.self.value.bias', 'module.cross_modal_image_layers.1.crossattention.output.dense.bias', 'module.cross_modal_image_layers.1.crossattention.output.LayerNorm.weight', 'module.cross_modal_image_layers.1.crossattention.output.LayerNorm.bias', 'module.cross_modal_image_layers.1.intermediate.dense.bias', 'module.cross_modal_image_layers.1.output.dense.bias', 'module.cross_modal_image_layers.1.output.LayerNorm.weight', 'module.cross_modal_image_layers.1.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - ============================cross_modal_image_layers:0下面这些参数的学习率是:4.8261420000000007e-05
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.0.attention.self.query.weight', 'module.cross_modal_image_layers.0.attention.self.key.weight', 'module.cross_modal_image_layers.0.attention.self.value.weight', 'module.cross_modal_image_layers.0.attention.output.dense.weight', 'module.cross_modal_image_layers.0.crossattention.self.query.weight', 'module.cross_modal_image_layers.0.crossattention.self.key.weight', 'module.cross_modal_image_layers.0.crossattention.self.value.weight', 'module.cross_modal_image_layers.0.crossattention.output.dense.weight', 'module.cross_modal_image_layers.0.intermediate.dense.weight', 'module.cross_modal_image_layers.0.output.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.cross_modal_image_layers.0.attention.self.query.bias', 'module.cross_modal_image_layers.0.attention.self.key.bias', 'module.cross_modal_image_layers.0.attention.self.value.bias', 'module.cross_modal_image_layers.0.attention.output.dense.bias', 'module.cross_modal_image_layers.0.attention.output.LayerNorm.weight', 'module.cross_modal_image_layers.0.attention.output.LayerNorm.bias', 'module.cross_modal_image_layers.0.crossattention.self.query.bias', 'module.cross_modal_image_layers.0.crossattention.self.key.bias', 'module.cross_modal_image_layers.0.crossattention.self.value.bias', 'module.cross_modal_image_layers.0.crossattention.output.dense.bias', 'module.cross_modal_image_layers.0.crossattention.output.LayerNorm.weight', 'module.cross_modal_image_layers.0.crossattention.output.LayerNorm.bias', 'module.cross_modal_image_layers.0.intermediate.dense.bias', 'module.cross_modal_image_layers.0.output.dense.bias', 'module.cross_modal_image_layers.0.output.LayerNorm.weight', 'module.cross_modal_image_layers.0.output.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - 
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    *************************************************************************************************************
+    
+2022-07-29 13:13:32 - INFO - ============================itm mfm下面这些参数的学习率是:4e-05
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.cls.predictions.transform.dense.weight', 'module.itm_head.weight', 'module.text_encoder_m.cls.predictions.transform.dense.weight']
+2022-07-29 13:13:32 - INFO - ['module.text_encoder.cls.predictions.bias', 'module.text_encoder.cls.predictions.transform.dense.bias', 'module.text_encoder.cls.predictions.transform.LayerNorm.weight', 'module.text_encoder.cls.predictions.transform.LayerNorm.bias', 'module.itm_head.bias', 'module.text_encoder_m.cls.predictions.bias', 'module.text_encoder_m.cls.predictions.transform.dense.bias', 'module.text_encoder_m.cls.predictions.transform.LayerNorm.weight', 'module.text_encoder_m.cls.predictions.transform.LayerNorm.bias']
+2022-07-29 13:13:32 - INFO - =====================参数不在我们的分组有=====================
+2022-07-29 13:13:32 - INFO - {'module.text_transform_2_m.transform_2.bias', 'module.video_transform_2_m.transform_1.bias', 'module.text_transform_2.transform_1.weight', 'module.text_transform_2_m.transform_2.weight', 'module.text_transform_2_m.transform_1.bias', 'module.video_transform_2.transform_2.bias', 'module.text_transform_2.transform_2.weight', 'module.text_transform_m.transform_2.bias', 'module.text_transform_2.transform_2.bias', 'module.text_transform_m.transform_2.weight', 'module.video_transform_2_m.transform_2.bias', 'module.video_transform_m.transform_2.bias', 'module.text_transform_2.transform_1.bias', 'module.video_transform_2.transform_1.weight', 'module.video_transform_m.transform_1.weight', 'module.temp', 'module.text_transform.transform_2.weight', 'module.text_transform.transform_1.bias', 'module.video_transform.transform_2.weight', 'module.video_transform_2_m.transform_1.weight', 'module.video_transform_2.transform_2.weight', 'module.text_transform.transform_2.bias', 'module.video_transform_m.transform_2.weight', 'module.video_transform_2.transform_1.bias', 'module.video_transform_2_m.transform_2.weight', 'module.text_transform_m.transform_1.weight', 'module.text_transform_2_m.transform_1.weight', 'module.text_transform_m.transform_1.bias', 'module.text_transform.transform_1.weight', 'module.video_transform_m.transform_1.bias', 'module.video_transform.transform_1.bias', 'module.video_transform.transform_2.bias', 'module.video_transform.transform_1.weight'}
+2022-07-29 13:13:32 - INFO - ===================他们的学习率将设为默认的4e-05=========================
+2022-07-29 13:13:32 - INFO - total step=110000	 one epoch step=13750
+2022-07-29 13:15:17 - INFO - Epoch=1/8 	 step= 99 	 total_loss= 12.91,itm_loss= 0.896,mlm_loss= 2.672,itc_loss= 9.338
+2022-07-29 13:16:47 - INFO - Epoch=1/8 	 step=199 	 total_loss= 12.84,itm_loss=0.7841,mlm_loss= 2.654,itc_loss= 9.402
+2022-07-29 13:18:17 - INFO - Epoch=1/8 	 step=299 	 total_loss= 12.71,itm_loss=0.7419,mlm_loss=  2.64,itc_loss= 9.327
+2022-07-29 13:19:47 - INFO - Epoch=1/8 	 step=399 	 total_loss= 12.56,itm_loss=0.7189,mlm_loss= 2.617,itc_loss= 9.227
+2022-07-29 13:21:17 - INFO - Epoch=1/8 	 step=499 	 total_loss= 12.43,itm_loss=0.7048,mlm_loss= 2.602,itc_loss= 9.118
+2022-07-29 13:22:47 - INFO - Epoch=1/8 	 step=599 	 total_loss=  12.3,itm_loss=0.6946,mlm_loss= 2.584,itc_loss= 9.022
+2022-07-29 13:24:17 - INFO - Epoch=1/8 	 step=699 	 total_loss= 12.19,itm_loss=0.6872,mlm_loss= 2.571,itc_loss= 8.936
+2022-07-29 13:25:47 - INFO - Epoch=1/8 	 step=799 	 total_loss=  12.1,itm_loss=0.6815,mlm_loss= 2.555,itc_loss= 8.863
+2022-07-29 13:27:17 - INFO - Epoch=1/8 	 step=899 	 total_loss= 12.01,itm_loss=0.6768,mlm_loss= 2.538,itc_loss= 8.796
+2022-07-29 13:28:47 - INFO - Epoch=1/8 	 step=999 	 total_loss= 11.94,itm_loss=0.6731,mlm_loss= 2.525,itc_loss= 8.738
+2022-07-29 13:30:17 - INFO - Epoch=1/8 	 step=1099 	 total_loss= 11.87,itm_loss=0.6699,mlm_loss= 2.513,itc_loss= 8.685
+2022-07-29 13:31:47 - INFO - Epoch=1/8 	 step=1199 	 total_loss=  11.8,itm_loss=0.6673,mlm_loss=   2.5,itc_loss= 8.633
+2022-07-29 13:33:17 - INFO - Epoch=1/8 	 step=1299 	 total_loss= 11.73,itm_loss= 0.665,mlm_loss= 2.487,itc_loss= 8.582
+2022-07-29 13:34:46 - INFO - Epoch=1/8 	 step=1399 	 total_loss= 11.67,itm_loss= 0.663,mlm_loss= 2.473,itc_loss= 8.531
+2022-07-29 13:36:16 - INFO - Epoch=1/8 	 step=1499 	 total_loss=  11.6,itm_loss=0.6612,mlm_loss= 2.462,itc_loss= 8.479
+2022-07-29 13:37:46 - INFO - Epoch=1/8 	 step=1599 	 total_loss= 11.53,itm_loss=0.6597,mlm_loss= 2.448,itc_loss= 8.427
+2022-07-29 13:39:16 - INFO - Epoch=1/8 	 step=1699 	 total_loss= 11.47,itm_loss=0.6583,mlm_loss= 2.437,itc_loss= 8.374
+2022-07-29 13:40:46 - INFO - Epoch=1/8 	 step=1799 	 total_loss= 11.41,itm_loss= 0.657,mlm_loss= 2.426,itc_loss= 8.322
+2022-07-29 13:42:16 - INFO - Epoch=1/8 	 step=1899 	 total_loss= 11.34,itm_loss=0.6559,mlm_loss= 2.413,itc_loss=  8.27
+2022-07-29 13:43:46 - INFO - Epoch=1/8 	 step=1999 	 total_loss= 11.28,itm_loss=0.6549,mlm_loss= 2.401,itc_loss=  8.22
+2022-07-29 13:45:16 - INFO - Epoch=1/8 	 step=2099 	 total_loss= 11.22,itm_loss=0.6539,mlm_loss= 2.389,itc_loss= 8.172
+2022-07-29 13:46:45 - INFO - Epoch=1/8 	 step=2199 	 total_loss= 11.16,itm_loss= 0.653,mlm_loss= 2.379,itc_loss= 8.125
+2022-07-29 13:48:15 - INFO - Epoch=1/8 	 step=2299 	 total_loss=  11.1,itm_loss=0.6521,mlm_loss=  2.37,itc_loss=  8.08
+2022-07-29 13:49:45 - INFO - Epoch=1/8 	 step=2399 	 total_loss= 11.05,itm_loss=0.6514,mlm_loss= 2.359,itc_loss= 8.036
+2022-07-29 13:51:15 - INFO - Epoch=1/8 	 step=2499 	 total_loss= 10.99,itm_loss=0.6506,mlm_loss= 2.349,itc_loss= 7.993
+2022-07-29 13:52:45 - INFO - Epoch=1/8 	 step=2599 	 total_loss= 10.94,itm_loss=0.6499,mlm_loss= 2.339,itc_loss= 7.953
+2022-07-29 13:54:15 - INFO - Epoch=1/8 	 step=2699 	 total_loss= 10.89,itm_loss=0.6493,mlm_loss=  2.33,itc_loss= 7.914
+2022-07-29 13:55:45 - INFO - Epoch=1/8 	 step=2799 	 total_loss= 10.85,itm_loss=0.6487,mlm_loss= 2.322,itc_loss= 7.876
+2022-07-29 13:57:15 - INFO - Epoch=1/8 	 step=2899 	 total_loss=  10.8,itm_loss=0.6481,mlm_loss= 2.312,itc_loss= 7.839
+2022-07-29 13:58:44 - INFO - Epoch=1/8 	 step=2999 	 total_loss= 10.76,itm_loss=0.6475,mlm_loss= 2.304,itc_loss= 7.804
+2022-07-29 14:00:14 - INFO - Epoch=1/8 	 step=3099 	 total_loss= 10.71,itm_loss= 0.647,mlm_loss= 2.295,itc_loss=  7.77
+2022-07-29 14:01:44 - INFO - Epoch=1/8 	 step=3199 	 total_loss= 10.67,itm_loss=0.6465,mlm_loss= 2.287,itc_loss= 7.736
+2022-07-29 14:03:14 - INFO - Epoch=1/8 	 step=3299 	 total_loss= 10.63,itm_loss= 0.646,mlm_loss= 2.279,itc_loss= 7.704
+2022-07-29 14:04:44 - INFO - Epoch=1/8 	 step=3399 	 total_loss= 10.59,itm_loss=0.6456,mlm_loss= 2.272,itc_loss= 7.672
+2022-07-29 14:06:14 - INFO - Epoch=1/8 	 step=3499 	 total_loss= 10.55,itm_loss=0.6452,mlm_loss= 2.265,itc_loss= 7.642
+2022-07-29 14:07:44 - INFO - Epoch=1/8 	 step=3599 	 total_loss= 10.52,itm_loss=0.6448,mlm_loss= 2.258,itc_loss= 7.612
+2022-07-29 14:09:14 - INFO - Epoch=1/8 	 step=3699 	 total_loss= 10.48,itm_loss=0.6444,mlm_loss= 2.252,itc_loss= 7.584
+2022-07-29 14:10:44 - INFO - Epoch=1/8 	 step=3799 	 total_loss= 10.45,itm_loss= 0.644,mlm_loss= 2.246,itc_loss= 7.556
+2022-07-29 14:12:13 - INFO - Epoch=1/8 	 step=3899 	 total_loss= 10.41,itm_loss=0.6437,mlm_loss= 2.239,itc_loss= 7.529
+2022-07-29 14:13:43 - INFO - Epoch=1/8 	 step=3999 	 total_loss= 10.38,itm_loss=0.6434,mlm_loss= 2.233,itc_loss= 7.503
+2022-07-29 14:15:13 - INFO - Epoch=1/8 	 step=4099 	 total_loss= 10.35,itm_loss= 0.643,mlm_loss= 2.227,itc_loss= 7.477
+2022-07-29 14:16:43 - INFO - Epoch=1/8 	 step=4199 	 total_loss= 10.32,itm_loss=0.6427,mlm_loss= 2.221,itc_loss= 7.452
+2022-07-29 14:18:13 - INFO - Epoch=1/8 	 step=4299 	 total_loss= 10.29,itm_loss=0.6424,mlm_loss= 2.215,itc_loss= 7.428
+2022-07-29 14:19:43 - INFO - Epoch=1/8 	 step=4399 	 total_loss= 10.26,itm_loss=0.6421,mlm_loss= 2.209,itc_loss= 7.405
+2022-07-29 14:21:13 - INFO - Epoch=1/8 	 step=4499 	 total_loss= 10.23,itm_loss=0.6419,mlm_loss= 2.204,itc_loss= 7.383
+2022-07-29 14:22:42 - INFO - Epoch=1/8 	 step=4599 	 total_loss=  10.2,itm_loss=0.6416,mlm_loss= 2.199,itc_loss= 7.361
+2022-07-29 14:24:12 - INFO - Epoch=1/8 	 step=4699 	 total_loss= 10.17,itm_loss=0.6413,mlm_loss= 2.194,itc_loss= 7.339
+2022-07-29 14:25:42 - INFO - Epoch=1/8 	 step=4799 	 total_loss= 10.15,itm_loss= 0.641,mlm_loss= 2.189,itc_loss= 7.318
+2022-07-29 14:27:12 - INFO - Epoch=1/8 	 step=4899 	 total_loss= 10.12,itm_loss=0.6407,mlm_loss= 2.184,itc_loss= 7.297
+2022-07-29 14:28:42 - INFO - Epoch=1/8 	 step=4999 	 total_loss=  10.1,itm_loss=0.6402,mlm_loss=  2.18,itc_loss= 7.277
+2022-07-29 14:30:11 - INFO - Epoch=1/8 	 step=5099 	 total_loss= 10.07,itm_loss=0.6398,mlm_loss= 2.175,itc_loss= 7.257
+2022-07-29 14:31:41 - INFO - Epoch=1/8 	 step=5199 	 total_loss= 10.05,itm_loss=0.6392,mlm_loss=  2.17,itc_loss= 7.237
+2022-07-29 14:33:11 - INFO - Epoch=1/8 	 step=5299 	 total_loss= 10.02,itm_loss=0.6386,mlm_loss= 2.167,itc_loss= 7.217
+2022-07-29 14:34:41 - INFO - Epoch=1/8 	 step=5399 	 total_loss= 9.999,itm_loss=0.6379,mlm_loss= 2.162,itc_loss= 7.199
+2022-07-29 14:36:11 - INFO - Epoch=1/8 	 step=5499 	 total_loss= 9.974,itm_loss=0.6372,mlm_loss= 2.158,itc_loss= 7.179
+2022-07-29 14:37:41 - INFO - Epoch=1/8 	 step=5599 	 total_loss= 9.951,itm_loss=0.6364,mlm_loss= 2.153,itc_loss= 7.161
+2022-07-29 14:39:10 - INFO - Epoch=1/8 	 step=5699 	 total_loss= 9.928,itm_loss=0.6356,mlm_loss=  2.15,itc_loss= 7.143
+2022-07-29 14:40:40 - INFO - Epoch=1/8 	 step=5799 	 total_loss= 9.906,itm_loss=0.6347,mlm_loss= 2.146,itc_loss= 7.126
+2022-07-29 14:42:10 - INFO - Epoch=1/8 	 step=5899 	 total_loss= 9.885,itm_loss=0.6339,mlm_loss= 2.142,itc_loss= 7.109
+2022-07-29 14:43:40 - INFO - Epoch=1/8 	 step=5999 	 total_loss= 9.865,itm_loss=0.6332,mlm_loss= 2.138,itc_loss= 7.094
+2022-07-29 14:45:10 - INFO - Epoch=1/8 	 step=6099 	 total_loss= 9.844,itm_loss=0.6323,mlm_loss= 2.134,itc_loss= 7.078
+2022-07-29 14:46:39 - INFO - Epoch=1/8 	 step=6199 	 total_loss= 9.824,itm_loss=0.6315,mlm_loss= 2.131,itc_loss= 7.062
+2022-07-29 14:48:09 - INFO - Epoch=1/8 	 step=6299 	 total_loss= 9.805,itm_loss=0.6307,mlm_loss= 2.127,itc_loss= 7.047
+2022-07-29 14:49:39 - INFO - Epoch=1/8 	 step=6399 	 total_loss= 9.786,itm_loss=0.6299,mlm_loss= 2.124,itc_loss= 7.032
+2022-07-29 14:51:09 - INFO - Epoch=1/8 	 step=6499 	 total_loss= 9.766,itm_loss=0.6292,mlm_loss=  2.12,itc_loss= 7.017
+2022-07-29 14:52:39 - INFO - Epoch=1/8 	 step=6599 	 total_loss= 9.747,itm_loss=0.6284,mlm_loss= 2.117,itc_loss= 7.002
+2022-07-29 14:54:09 - INFO - Epoch=1/8 	 step=6699 	 total_loss= 9.729,itm_loss=0.6277,mlm_loss= 2.113,itc_loss= 6.987
+2022-07-29 14:55:38 - INFO - Epoch=1/8 	 step=6799 	 total_loss=  9.71,itm_loss= 0.627,mlm_loss=  2.11,itc_loss= 6.974
+2022-07-29 14:57:08 - INFO - Epoch=1/8 	 step=6899 	 total_loss= 9.692,itm_loss=0.6262,mlm_loss= 2.107,itc_loss= 6.959
+2022-07-29 14:58:39 - INFO - Epoch=1/8 	 step=6999 	 total_loss= 9.674,itm_loss=0.6254,mlm_loss= 2.103,itc_loss= 6.945
+2022-07-29 15:00:09 - INFO - Epoch=1/8 	 step=7099 	 total_loss= 9.657,itm_loss=0.6246,mlm_loss= 2.101,itc_loss= 6.932
+2022-07-29 15:01:39 - INFO - Epoch=1/8 	 step=7199 	 total_loss= 9.641,itm_loss=0.6237,mlm_loss= 2.098,itc_loss= 6.919
+2022-07-29 15:03:08 - INFO - Epoch=1/8 	 step=7299 	 total_loss= 9.623,itm_loss= 0.623,mlm_loss= 2.095,itc_loss= 6.906
+2022-07-29 15:04:38 - INFO - Epoch=1/8 	 step=7399 	 total_loss= 9.607,itm_loss=0.6222,mlm_loss= 2.092,itc_loss= 6.893
+2022-07-29 15:06:08 - INFO - Epoch=1/8 	 step=7499 	 total_loss= 9.591,itm_loss=0.6213,mlm_loss= 2.089,itc_loss= 6.881
+2022-07-29 15:07:38 - INFO - Epoch=1/8 	 step=7599 	 total_loss= 9.576,itm_loss=0.6204,mlm_loss= 2.086,itc_loss= 6.869
+2022-07-29 15:09:08 - INFO - Epoch=1/8 	 step=7699 	 total_loss=  9.56,itm_loss=0.6196,mlm_loss= 2.083,itc_loss= 6.857
+2022-07-29 15:10:38 - INFO - Epoch=1/8 	 step=7799 	 total_loss= 9.544,itm_loss=0.6186,mlm_loss= 2.081,itc_loss= 6.844
+2022-07-29 15:12:07 - INFO - Epoch=1/8 	 step=7899 	 total_loss= 9.528,itm_loss=0.6178,mlm_loss= 2.078,itc_loss= 6.832
+2022-07-29 15:13:37 - INFO - Epoch=1/8 	 step=7999 	 total_loss= 9.513,itm_loss=0.6169,mlm_loss= 2.076,itc_loss= 6.821
+2022-07-29 15:15:07 - INFO - Epoch=1/8 	 step=8099 	 total_loss= 9.498,itm_loss=0.6159,mlm_loss= 2.073,itc_loss= 6.809
+2022-07-29 15:16:37 - INFO - Epoch=1/8 	 step=8199 	 total_loss= 9.483,itm_loss= 0.615,mlm_loss=  2.07,itc_loss= 6.798
+2022-07-29 15:18:07 - INFO - Epoch=1/8 	 step=8299 	 total_loss= 9.468,itm_loss= 0.614,mlm_loss= 2.068,itc_loss= 6.787
+2022-07-29 15:19:37 - INFO - Epoch=1/8 	 step=8399 	 total_loss= 9.454,itm_loss= 0.613,mlm_loss= 2.065,itc_loss= 6.776
+2022-07-29 15:21:07 - INFO - Epoch=1/8 	 step=8499 	 total_loss=  9.44,itm_loss= 0.612,mlm_loss= 2.063,itc_loss= 6.765
+2022-07-29 15:22:37 - INFO - Epoch=1/8 	 step=8599 	 total_loss= 9.426,itm_loss=0.6111,mlm_loss=  2.06,itc_loss= 6.755
+2022-07-29 15:24:06 - INFO - Epoch=1/8 	 step=8699 	 total_loss= 9.413,itm_loss=0.6101,mlm_loss= 2.058,itc_loss= 6.744
+2022-07-29 15:25:36 - INFO - Epoch=1/8 	 step=8799 	 total_loss= 9.399,itm_loss=0.6092,mlm_loss= 2.056,itc_loss= 6.734
+2022-07-29 15:27:06 - INFO - Epoch=1/8 	 step=8899 	 total_loss= 9.385,itm_loss=0.6082,mlm_loss= 2.054,itc_loss= 6.723
+2022-07-29 15:28:36 - INFO - Epoch=1/8 	 step=8999 	 total_loss= 9.372,itm_loss=0.6074,mlm_loss= 2.051,itc_loss= 6.713
+2022-07-29 15:30:07 - INFO - Epoch=1/8 	 step=9099 	 total_loss= 9.359,itm_loss=0.6064,mlm_loss= 2.049,itc_loss= 6.704
+2022-07-29 15:31:37 - INFO - Epoch=1/8 	 step=9199 	 total_loss= 9.347,itm_loss=0.6055,mlm_loss= 2.047,itc_loss= 6.694
+2022-07-29 15:33:06 - INFO - Epoch=1/8 	 step=9299 	 total_loss= 9.334,itm_loss=0.6046,mlm_loss= 2.045,itc_loss= 6.685
+2022-07-29 15:34:36 - INFO - Epoch=1/8 	 step=9399 	 total_loss= 9.322,itm_loss=0.6036,mlm_loss= 2.043,itc_loss= 6.675
+2022-07-29 15:36:06 - INFO - Epoch=1/8 	 step=9499 	 total_loss= 9.309,itm_loss=0.6028,mlm_loss= 2.041,itc_loss= 6.666
+2022-07-29 15:37:36 - INFO - Epoch=1/8 	 step=9599 	 total_loss= 9.297,itm_loss=0.6018,mlm_loss= 2.039,itc_loss= 6.656
+2022-07-29 15:39:06 - INFO - Epoch=1/8 	 step=9699 	 total_loss= 9.284,itm_loss=0.6009,mlm_loss= 2.037,itc_loss= 6.647
+2022-07-29 15:40:35 - INFO - Epoch=1/8 	 step=9799 	 total_loss= 9.273,itm_loss=   0.6,mlm_loss= 2.035,itc_loss= 6.638
+2022-07-29 15:42:05 - INFO - Epoch=1/8 	 step=9899 	 total_loss= 9.261,itm_loss=0.5992,mlm_loss= 2.033,itc_loss= 6.629
+2022-07-29 15:43:35 - INFO - Epoch=1/8 	 step=9999 	 total_loss= 9.249,itm_loss=0.5982,mlm_loss= 2.031,itc_loss=  6.62
+2022-07-29 15:45:05 - INFO - Epoch=1/8 	 step=10099 	 total_loss= 9.237,itm_loss=0.5973,mlm_loss= 2.029,itc_loss= 6.612
+2022-07-29 15:46:35 - INFO - Epoch=1/8 	 step=10199 	 total_loss= 9.226,itm_loss=0.5963,mlm_loss= 2.027,itc_loss= 6.603
+2022-07-29 15:48:05 - INFO - Epoch=1/8 	 step=10299 	 total_loss= 9.214,itm_loss=0.5954,mlm_loss= 2.025,itc_loss= 6.594
+2022-07-29 15:49:34 - INFO - Epoch=1/8 	 step=10399 	 total_loss= 9.203,itm_loss=0.5944,mlm_loss= 2.023,itc_loss= 6.586
+2022-07-29 15:51:04 - INFO - Epoch=1/8 	 step=10499 	 total_loss= 9.192,itm_loss=0.5935,mlm_loss= 2.021,itc_loss= 6.578
+2022-07-29 15:52:34 - INFO - Epoch=1/8 	 step=10599 	 total_loss= 9.182,itm_loss=0.5927,mlm_loss= 2.019,itc_loss=  6.57
+2022-07-29 15:54:04 - INFO - Epoch=1/8 	 step=10699 	 total_loss=  9.17,itm_loss=0.5918,mlm_loss= 2.017,itc_loss= 6.561
+2022-07-29 15:55:34 - INFO - Epoch=1/8 	 step=10799 	 total_loss= 9.159,itm_loss=0.5909,mlm_loss= 2.015,itc_loss= 6.552
+2022-07-29 15:57:04 - INFO - Epoch=1/8 	 step=10899 	 total_loss= 9.149,itm_loss=  0.59,mlm_loss= 2.014,itc_loss= 6.545
+2022-07-29 15:58:33 - INFO - Epoch=1/8 	 step=10999 	 total_loss= 9.138,itm_loss=0.5891,mlm_loss= 2.012,itc_loss= 6.537
+2022-07-29 16:00:03 - INFO - Epoch=1/8 	 step=11099 	 total_loss= 9.129,itm_loss=0.5883,mlm_loss= 2.011,itc_loss=  6.53
+2022-07-29 16:01:33 - INFO - Epoch=1/8 	 step=11199 	 total_loss= 9.118,itm_loss=0.5874,mlm_loss= 2.009,itc_loss= 6.522
+2022-07-29 16:03:03 - INFO - Epoch=1/8 	 step=11299 	 total_loss= 9.108,itm_loss=0.5865,mlm_loss= 2.007,itc_loss= 6.515
+2022-07-29 16:04:33 - INFO - Epoch=1/8 	 step=11399 	 total_loss= 9.098,itm_loss=0.5857,mlm_loss= 2.005,itc_loss= 6.507
+2022-07-29 16:06:02 - INFO - Epoch=1/8 	 step=11499 	 total_loss= 9.089,itm_loss=0.5848,mlm_loss= 2.004,itc_loss=   6.5
+2022-07-29 16:07:32 - INFO - Epoch=1/8 	 step=11599 	 total_loss= 9.078,itm_loss=0.5839,mlm_loss= 2.002,itc_loss= 6.492
+2022-07-29 16:09:02 - INFO - Epoch=1/8 	 step=11699 	 total_loss= 9.069,itm_loss=0.5831,mlm_loss=   2.0,itc_loss= 6.485
+2022-07-29 16:10:32 - INFO - Epoch=1/8 	 step=11799 	 total_loss= 9.059,itm_loss=0.5822,mlm_loss= 1.999,itc_loss= 6.477
+2022-07-29 16:12:02 - INFO - Epoch=1/8 	 step=11899 	 total_loss= 9.049,itm_loss=0.5814,mlm_loss= 1.998,itc_loss=  6.47
+2022-07-29 16:13:32 - INFO - Epoch=1/8 	 step=11999 	 total_loss=  9.04,itm_loss=0.5806,mlm_loss= 1.996,itc_loss= 6.463
+2022-07-29 16:15:02 - INFO - Epoch=1/8 	 step=12099 	 total_loss=  9.03,itm_loss=0.5798,mlm_loss= 1.995,itc_loss= 6.456
+2022-07-29 16:16:31 - INFO - Epoch=1/8 	 step=12199 	 total_loss= 9.022,itm_loss= 0.579,mlm_loss= 1.993,itc_loss= 6.449
+2022-07-29 16:18:01 - INFO - Epoch=1/8 	 step=12299 	 total_loss= 9.012,itm_loss=0.5783,mlm_loss= 1.992,itc_loss= 6.442
+2022-07-29 16:19:31 - INFO - Epoch=1/8 	 step=12399 	 total_loss= 9.003,itm_loss=0.5774,mlm_loss=  1.99,itc_loss= 6.435
+2022-07-29 16:21:01 - INFO - Epoch=1/8 	 step=12499 	 total_loss= 8.994,itm_loss=0.5766,mlm_loss= 1.989,itc_loss= 6.429
+2022-07-29 16:22:31 - INFO - Epoch=1/8 	 step=12599 	 total_loss= 8.986,itm_loss=0.5759,mlm_loss= 1.987,itc_loss= 6.422
+2022-07-29 16:24:01 - INFO - Epoch=1/8 	 step=12699 	 total_loss= 8.977,itm_loss=0.5752,mlm_loss= 1.986,itc_loss= 6.416
+2022-07-29 16:25:30 - INFO - Epoch=1/8 	 step=12799 	 total_loss= 8.969,itm_loss=0.5744,mlm_loss= 1.985,itc_loss=  6.41
+2022-07-29 16:27:00 - INFO - Epoch=1/8 	 step=12899 	 total_loss=  8.96,itm_loss=0.5736,mlm_loss= 1.983,itc_loss= 6.403
+2022-07-29 16:28:30 - INFO - Epoch=1/8 	 step=12999 	 total_loss= 8.952,itm_loss=0.5729,mlm_loss= 1.982,itc_loss= 6.397
+2022-07-29 16:30:00 - INFO - Epoch=1/8 	 step=13099 	 total_loss= 8.944,itm_loss=0.5722,mlm_loss=  1.98,itc_loss= 6.391
+2022-07-29 16:31:30 - INFO - Epoch=1/8 	 step=13199 	 total_loss= 8.936,itm_loss=0.5715,mlm_loss= 1.979,itc_loss= 6.385
+2022-07-29 16:32:59 - INFO - Epoch=1/8 	 step=13299 	 total_loss= 8.928,itm_loss=0.5708,mlm_loss= 1.978,itc_loss= 6.379
+2022-07-29 16:34:29 - INFO - Epoch=1/8 	 step=13399 	 total_loss=  8.92,itm_loss=0.5701,mlm_loss= 1.977,itc_loss= 6.373
+2022-07-29 16:35:59 - INFO - Epoch=1/8 	 step=13499 	 total_loss= 8.912,itm_loss=0.5693,mlm_loss= 1.975,itc_loss= 6.367
+2022-07-29 16:37:29 - INFO - Epoch=1/8 	 step=13599 	 total_loss= 8.904,itm_loss=0.5686,mlm_loss= 1.974,itc_loss= 6.361
+2022-07-29 16:38:59 - INFO - Epoch=1/8 	 step=13699 	 total_loss= 8.896,itm_loss=0.5679,mlm_loss= 1.973,itc_loss= 6.355
+2022-07-29 16:41:04 - INFO - Epoch=2/8 	 step=13799 	 total_loss= 7.759,itm_loss=0.4559,mlm_loss=  1.74,itc_loss= 5.563
+2022-07-29 16:42:34 - INFO - Epoch=2/8 	 step=13899 	 total_loss= 7.772,itm_loss=0.4617,mlm_loss= 1.782,itc_loss= 5.528
+2022-07-29 16:44:04 - INFO - Epoch=2/8 	 step=13999 	 total_loss= 7.779,itm_loss=0.4677,mlm_loss=  1.79,itc_loss= 5.521
+2022-07-29 16:45:34 - INFO - Epoch=2/8 	 step=14099 	 total_loss= 7.767,itm_loss=0.4668,mlm_loss= 1.793,itc_loss= 5.507
+2022-07-29 16:47:03 - INFO - Epoch=2/8 	 step=14199 	 total_loss= 7.777,itm_loss=0.4685,mlm_loss= 1.799,itc_loss= 5.509
+2022-07-29 16:48:33 - INFO - Epoch=2/8 	 step=14299 	 total_loss= 7.781,itm_loss=0.4681,mlm_loss= 1.797,itc_loss= 5.516
+2022-07-29 16:50:03 - INFO - Epoch=2/8 	 step=14399 	 total_loss= 7.781,itm_loss=0.4675,mlm_loss= 1.798,itc_loss= 5.516
+2022-07-29 16:51:33 - INFO - Epoch=2/8 	 step=14499 	 total_loss= 7.778,itm_loss=0.4676,mlm_loss= 1.795,itc_loss= 5.515
+2022-07-29 16:53:03 - INFO - Epoch=2/8 	 step=14599 	 total_loss= 7.769,itm_loss=0.4675,mlm_loss= 1.794,itc_loss= 5.507
+2022-07-29 16:54:32 - INFO - Epoch=2/8 	 step=14699 	 total_loss= 7.762,itm_loss=0.4669,mlm_loss= 1.794,itc_loss= 5.501
+2022-07-29 16:56:02 - INFO - Epoch=2/8 	 step=14799 	 total_loss= 7.759,itm_loss=0.4676,mlm_loss= 1.793,itc_loss= 5.498
+2022-07-29 16:57:32 - INFO - Epoch=2/8 	 step=14899 	 total_loss=  7.76,itm_loss=0.4675,mlm_loss= 1.793,itc_loss=   5.5
+2022-07-29 16:59:02 - INFO - Epoch=2/8 	 step=14999 	 total_loss= 7.756,itm_loss=0.4669,mlm_loss= 1.793,itc_loss= 5.496
+2022-07-29 18:09:08 - INFO - Epoch=2/8 	 step=13799 	 total_loss= 7.783,itm_loss=0.4605,mlm_loss= 1.748,itc_loss= 5.575
+2022-07-29 18:10:38 - INFO - Epoch=2/8 	 step=13899 	 total_loss= 7.753,itm_loss=0.4667,mlm_loss= 1.777,itc_loss=  5.51
+2022-07-29 18:12:08 - INFO - Epoch=2/8 	 step=13999 	 total_loss= 7.774,itm_loss=0.4679,mlm_loss= 1.791,itc_loss= 5.515
+2022-07-29 18:13:37 - INFO - Epoch=2/8 	 step=14099 	 total_loss= 7.759,itm_loss=0.4654,mlm_loss= 1.788,itc_loss= 5.506
+2022-07-29 18:15:07 - INFO - Epoch=2/8 	 step=14199 	 total_loss= 7.768,itm_loss=0.4662,mlm_loss= 1.793,itc_loss= 5.509
+2022-07-29 18:16:37 - INFO - Epoch=2/8 	 step=14299 	 total_loss=  7.78,itm_loss=0.4657,mlm_loss= 1.795,itc_loss= 5.519
+2022-07-29 18:18:07 - INFO - Epoch=2/8 	 step=14399 	 total_loss= 7.781,itm_loss=0.4642,mlm_loss= 1.798,itc_loss= 5.518
+2022-07-29 18:19:37 - INFO - Epoch=2/8 	 step=14499 	 total_loss= 7.777,itm_loss=0.4647,mlm_loss= 1.797,itc_loss= 5.516
+2022-07-29 18:21:07 - INFO - Epoch=2/8 	 step=14599 	 total_loss=  7.77,itm_loss=0.4644,mlm_loss= 1.795,itc_loss=  5.51
+2022-07-29 18:22:37 - INFO - Epoch=2/8 	 step=14699 	 total_loss= 7.764,itm_loss=0.4638,mlm_loss= 1.794,itc_loss= 5.506
+2022-07-29 18:24:06 - INFO - Epoch=2/8 	 step=14799 	 total_loss= 7.764,itm_loss= 0.465,mlm_loss= 1.793,itc_loss= 5.506
+2022-07-29 18:25:36 - INFO - Epoch=2/8 	 step=14899 	 total_loss= 7.765,itm_loss=0.4649,mlm_loss= 1.792,itc_loss= 5.508
+2022-07-29 18:27:06 - INFO - Epoch=2/8 	 step=14999 	 total_loss=  7.76,itm_loss=0.4642,mlm_loss= 1.792,itc_loss= 5.504
+2022-07-29 18:28:36 - INFO - Epoch=2/8 	 step=15099 	 total_loss= 7.759,itm_loss= 0.464,mlm_loss= 1.792,itc_loss= 5.503
+2022-07-29 18:30:05 - INFO - Epoch=2/8 	 step=15199 	 total_loss= 7.759,itm_loss= 0.464,mlm_loss= 1.791,itc_loss= 5.504
+2022-07-29 18:31:35 - INFO - Epoch=2/8 	 step=15299 	 total_loss= 7.757,itm_loss=0.4636,mlm_loss= 1.791,itc_loss= 5.502
+2022-07-29 18:33:05 - INFO - Epoch=2/8 	 step=15399 	 total_loss= 7.754,itm_loss=0.4631,mlm_loss= 1.792,itc_loss= 5.499
+2022-07-29 18:34:35 - INFO - Epoch=2/8 	 step=15499 	 total_loss= 7.749,itm_loss=0.4624,mlm_loss= 1.793,itc_loss= 5.493
+2022-07-29 18:36:04 - INFO - Epoch=2/8 	 step=15599 	 total_loss= 7.747,itm_loss=0.4618,mlm_loss= 1.793,itc_loss= 5.492
+2022-07-29 18:37:34 - INFO - Epoch=2/8 	 step=15699 	 total_loss= 7.744,itm_loss=0.4612,mlm_loss= 1.793,itc_loss=  5.49
+2022-07-29 18:39:04 - INFO - Epoch=2/8 	 step=15799 	 total_loss= 7.741,itm_loss= 0.461,mlm_loss= 1.791,itc_loss= 5.489
+2022-07-29 18:40:34 - INFO - Epoch=2/8 	 step=15899 	 total_loss= 7.741,itm_loss=0.4613,mlm_loss=  1.79,itc_loss= 5.489
+2022-07-29 18:42:03 - INFO - Epoch=2/8 	 step=15999 	 total_loss= 7.739,itm_loss=0.4614,mlm_loss= 1.791,itc_loss= 5.487
+2022-07-29 18:43:33 - INFO - Epoch=2/8 	 step=16099 	 total_loss= 7.737,itm_loss=0.4612,mlm_loss= 1.791,itc_loss= 5.484
+2022-07-29 18:45:03 - INFO - Epoch=2/8 	 step=16199 	 total_loss= 7.735,itm_loss=0.4614,mlm_loss= 1.791,itc_loss= 5.483
+2022-07-29 18:46:33 - INFO - Epoch=2/8 	 step=16299 	 total_loss= 7.734,itm_loss=0.4611,mlm_loss= 1.791,itc_loss= 5.482
+2022-07-29 18:48:02 - INFO - Epoch=2/8 	 step=16399 	 total_loss= 7.733,itm_loss= 0.461,mlm_loss=  1.79,itc_loss= 5.482
+2022-07-29 18:49:32 - INFO - Epoch=2/8 	 step=16499 	 total_loss=  7.73,itm_loss=0.4606,mlm_loss=  1.79,itc_loss= 5.479
+2022-07-29 18:51:02 - INFO - Epoch=2/8 	 step=16599 	 total_loss= 7.726,itm_loss=0.4605,mlm_loss= 1.789,itc_loss= 5.476
+2022-07-29 18:52:32 - INFO - Epoch=2/8 	 step=16699 	 total_loss= 7.726,itm_loss=  0.46,mlm_loss= 1.789,itc_loss= 5.477
+2022-07-29 18:54:01 - INFO - Epoch=2/8 	 step=16799 	 total_loss= 7.724,itm_loss=0.4598,mlm_loss= 1.789,itc_loss= 5.476
+2022-07-29 18:55:31 - INFO - Epoch=2/8 	 step=16899 	 total_loss= 7.722,itm_loss=0.4595,mlm_loss= 1.788,itc_loss= 5.474
+2022-07-29 18:57:01 - INFO - Epoch=2/8 	 step=16999 	 total_loss= 7.719,itm_loss=0.4593,mlm_loss= 1.788,itc_loss= 5.471
+2022-07-29 18:58:30 - INFO - Epoch=2/8 	 step=17099 	 total_loss= 7.715,itm_loss=0.4587,mlm_loss= 1.788,itc_loss= 5.468
+2022-07-29 19:00:00 - INFO - Epoch=2/8 	 step=17199 	 total_loss= 7.713,itm_loss=0.4584,mlm_loss= 1.789,itc_loss= 5.465
+2022-07-29 19:01:30 - INFO - Epoch=2/8 	 step=17299 	 total_loss= 7.709,itm_loss=0.4579,mlm_loss= 1.788,itc_loss= 5.462
+2022-07-29 19:03:00 - INFO - Epoch=2/8 	 step=17399 	 total_loss= 7.706,itm_loss=0.4577,mlm_loss= 1.789,itc_loss=  5.46
+2022-07-29 19:04:29 - INFO - Epoch=2/8 	 step=17499 	 total_loss= 7.703,itm_loss=0.4574,mlm_loss= 1.789,itc_loss= 5.457
+2022-07-29 19:05:59 - INFO - Epoch=2/8 	 step=17599 	 total_loss= 7.702,itm_loss=0.4572,mlm_loss= 1.789,itc_loss= 5.456
+2022-07-29 19:07:29 - INFO - Epoch=2/8 	 step=17699 	 total_loss= 7.698,itm_loss=0.4568,mlm_loss= 1.789,itc_loss= 5.453
+2022-07-29 19:08:59 - INFO - Epoch=2/8 	 step=17799 	 total_loss= 7.694,itm_loss=0.4565,mlm_loss= 1.788,itc_loss= 5.449
+2022-07-29 19:10:28 - INFO - Epoch=2/8 	 step=17899 	 total_loss= 7.692,itm_loss=0.4561,mlm_loss= 1.789,itc_loss= 5.447
+2022-07-29 19:11:58 - INFO - Epoch=2/8 	 step=17999 	 total_loss= 7.689,itm_loss=0.4561,mlm_loss= 1.788,itc_loss= 5.445
+2022-07-29 19:13:28 - INFO - Epoch=2/8 	 step=18099 	 total_loss= 7.688,itm_loss=0.4559,mlm_loss= 1.788,itc_loss= 5.444
+2022-07-29 19:14:58 - INFO - Epoch=2/8 	 step=18199 	 total_loss= 7.685,itm_loss=0.4557,mlm_loss= 1.787,itc_loss= 5.442
+2022-07-29 19:16:28 - INFO - Epoch=2/8 	 step=18299 	 total_loss= 7.684,itm_loss=0.4556,mlm_loss= 1.787,itc_loss= 5.441
+2022-07-29 19:17:57 - INFO - Epoch=2/8 	 step=18399 	 total_loss= 7.681,itm_loss=0.4553,mlm_loss= 1.787,itc_loss= 5.439
+2022-07-29 19:19:27 - INFO - Epoch=2/8 	 step=18499 	 total_loss=  7.68,itm_loss=0.4552,mlm_loss= 1.787,itc_loss= 5.438
+2022-07-29 19:20:57 - INFO - Epoch=2/8 	 step=18599 	 total_loss= 7.677,itm_loss=0.4549,mlm_loss= 1.787,itc_loss= 5.436
+2022-07-29 19:22:27 - INFO - Epoch=2/8 	 step=18699 	 total_loss= 7.674,itm_loss=0.4546,mlm_loss= 1.786,itc_loss= 5.433
+2022-07-29 19:23:56 - INFO - Epoch=2/8 	 step=18799 	 total_loss= 7.672,itm_loss=0.4543,mlm_loss= 1.786,itc_loss= 5.431
+2022-07-29 19:25:26 - INFO - Epoch=2/8 	 step=18899 	 total_loss= 7.668,itm_loss=0.4539,mlm_loss= 1.785,itc_loss= 5.429
+2022-07-29 19:26:56 - INFO - Epoch=2/8 	 step=18999 	 total_loss= 7.666,itm_loss=0.4534,mlm_loss= 1.786,itc_loss= 5.427
+2022-07-29 19:28:26 - INFO - Epoch=2/8 	 step=19099 	 total_loss= 7.663,itm_loss= 0.453,mlm_loss= 1.786,itc_loss= 5.424
+2022-07-29 19:29:55 - INFO - Epoch=2/8 	 step=19199 	 total_loss= 7.659,itm_loss=0.4525,mlm_loss= 1.786,itc_loss= 5.421
+2022-07-29 19:31:25 - INFO - Epoch=2/8 	 step=19299 	 total_loss= 7.656,itm_loss=0.4524,mlm_loss= 1.785,itc_loss= 5.419
+2022-07-29 19:32:55 - INFO - Epoch=2/8 	 step=19399 	 total_loss= 7.653,itm_loss=0.4519,mlm_loss= 1.785,itc_loss= 5.417
+2022-07-29 19:34:25 - INFO - Epoch=2/8 	 step=19499 	 total_loss=  7.65,itm_loss=0.4516,mlm_loss= 1.784,itc_loss= 5.414
+2022-07-29 19:35:54 - INFO - Epoch=2/8 	 step=19599 	 total_loss= 7.648,itm_loss=0.4513,mlm_loss= 1.785,itc_loss= 5.412
+2022-07-29 19:37:24 - INFO - Epoch=2/8 	 step=19699 	 total_loss= 7.647,itm_loss=0.4511,mlm_loss= 1.785,itc_loss= 5.411
+2022-07-29 19:38:54 - INFO - Epoch=2/8 	 step=19799 	 total_loss= 7.644,itm_loss=0.4506,mlm_loss= 1.785,itc_loss= 5.409
+2022-07-29 19:40:24 - INFO - Epoch=2/8 	 step=19899 	 total_loss= 7.642,itm_loss=0.4505,mlm_loss= 1.784,itc_loss= 5.408
+2022-07-29 19:41:53 - INFO - Epoch=2/8 	 step=19999 	 total_loss= 7.639,itm_loss=0.4502,mlm_loss= 1.783,itc_loss= 5.406
+2022-07-29 19:43:23 - INFO - Epoch=2/8 	 step=20099 	 total_loss= 7.637,itm_loss=  0.45,mlm_loss= 1.783,itc_loss= 5.404
+2022-07-29 19:44:53 - INFO - Epoch=2/8 	 step=20199 	 total_loss= 7.634,itm_loss=0.4498,mlm_loss= 1.783,itc_loss= 5.401
+2022-07-29 19:46:23 - INFO - Epoch=2/8 	 step=20299 	 total_loss= 7.631,itm_loss=0.4496,mlm_loss= 1.782,itc_loss= 5.399
+2022-07-29 19:47:53 - INFO - Epoch=2/8 	 step=20399 	 total_loss= 7.628,itm_loss=0.4493,mlm_loss= 1.782,itc_loss= 5.397
+2022-07-29 19:49:22 - INFO - Epoch=2/8 	 step=20499 	 total_loss= 7.625,itm_loss=0.4489,mlm_loss= 1.781,itc_loss= 5.395
+2022-07-29 19:50:52 - INFO - Epoch=2/8 	 step=20599 	 total_loss= 7.621,itm_loss=0.4485,mlm_loss=  1.78,itc_loss= 5.393
+2022-07-29 19:52:22 - INFO - Epoch=2/8 	 step=20699 	 total_loss= 7.619,itm_loss=0.4483,mlm_loss=  1.78,itc_loss= 5.391
+2022-07-29 19:53:51 - INFO - Epoch=2/8 	 step=20799 	 total_loss= 7.616,itm_loss= 0.448,mlm_loss=  1.78,itc_loss= 5.388
+2022-07-29 19:55:21 - INFO - Epoch=2/8 	 step=20899 	 total_loss= 7.613,itm_loss=0.4476,mlm_loss=  1.78,itc_loss= 5.386
+2022-07-29 19:56:51 - INFO - Epoch=2/8 	 step=20999 	 total_loss=  7.61,itm_loss=0.4472,mlm_loss= 1.779,itc_loss= 5.384
+2022-07-29 19:58:21 - INFO - Epoch=2/8 	 step=21099 	 total_loss= 7.608,itm_loss=0.4469,mlm_loss= 1.779,itc_loss= 5.382
+2022-07-29 19:59:51 - INFO - Epoch=2/8 	 step=21199 	 total_loss= 7.606,itm_loss=0.4466,mlm_loss= 1.779,itc_loss= 5.381
+2022-07-29 20:01:21 - INFO - Epoch=2/8 	 step=21299 	 total_loss= 7.603,itm_loss=0.4464,mlm_loss= 1.778,itc_loss= 5.379
+2022-07-29 20:02:50 - INFO - Epoch=2/8 	 step=21399 	 total_loss= 7.601,itm_loss=0.4461,mlm_loss= 1.777,itc_loss= 5.377
+2022-07-29 20:04:20 - INFO - Epoch=2/8 	 step=21499 	 total_loss= 7.598,itm_loss=0.4459,mlm_loss= 1.777,itc_loss= 5.374
+2022-07-29 20:05:50 - INFO - Epoch=2/8 	 step=21599 	 total_loss= 7.595,itm_loss=0.4455,mlm_loss= 1.777,itc_loss= 5.373
+2022-07-29 20:07:20 - INFO - Epoch=2/8 	 step=21699 	 total_loss= 7.593,itm_loss=0.4452,mlm_loss= 1.777,itc_loss= 5.371
+2022-07-29 20:08:49 - INFO - Epoch=2/8 	 step=21799 	 total_loss=  7.59,itm_loss=0.4449,mlm_loss= 1.777,itc_loss= 5.368
+2022-07-29 20:10:19 - INFO - Epoch=2/8 	 step=21899 	 total_loss= 7.587,itm_loss=0.4445,mlm_loss= 1.777,itc_loss= 5.366
+2022-07-29 20:11:49 - INFO - Epoch=2/8 	 step=21999 	 total_loss= 7.584,itm_loss=0.4442,mlm_loss= 1.776,itc_loss= 5.364
+2022-07-29 20:13:19 - INFO - Epoch=2/8 	 step=22099 	 total_loss= 7.582,itm_loss=0.4439,mlm_loss= 1.776,itc_loss= 5.362
+2022-07-29 20:14:48 - INFO - Epoch=2/8 	 step=22199 	 total_loss=  7.58,itm_loss=0.4437,mlm_loss= 1.776,itc_loss=  5.36
+2022-07-29 20:16:18 - INFO - Epoch=2/8 	 step=22299 	 total_loss= 7.577,itm_loss=0.4434,mlm_loss= 1.776,itc_loss= 5.358
+2022-07-29 20:17:48 - INFO - Epoch=2/8 	 step=22399 	 total_loss= 7.575,itm_loss= 0.443,mlm_loss= 1.776,itc_loss= 5.357
+2022-07-29 20:19:18 - INFO - Epoch=2/8 	 step=22499 	 total_loss= 7.573,itm_loss=0.4428,mlm_loss= 1.776,itc_loss= 5.354
+2022-07-29 20:20:47 - INFO - Epoch=2/8 	 step=22599 	 total_loss=  7.57,itm_loss=0.4426,mlm_loss= 1.776,itc_loss= 5.352
+2022-07-29 20:22:17 - INFO - Epoch=2/8 	 step=22699 	 total_loss= 7.567,itm_loss=0.4424,mlm_loss= 1.775,itc_loss=  5.35
+2022-07-29 20:23:47 - INFO - Epoch=2/8 	 step=22799 	 total_loss= 7.565,itm_loss=0.4421,mlm_loss= 1.775,itc_loss= 5.348
+2022-07-29 20:25:17 - INFO - Epoch=2/8 	 step=22899 	 total_loss= 7.563,itm_loss=0.4418,mlm_loss= 1.775,itc_loss= 5.346
+2022-07-29 20:26:46 - INFO - Epoch=2/8 	 step=22999 	 total_loss= 7.562,itm_loss=0.4416,mlm_loss= 1.775,itc_loss= 5.345
+2022-07-29 20:28:16 - INFO - Epoch=2/8 	 step=23099 	 total_loss= 7.559,itm_loss=0.4413,mlm_loss= 1.775,itc_loss= 5.343
+2022-07-29 20:29:46 - INFO - Epoch=2/8 	 step=23199 	 total_loss= 7.557,itm_loss= 0.441,mlm_loss= 1.775,itc_loss= 5.341
+2022-07-29 20:31:16 - INFO - Epoch=2/8 	 step=23299 	 total_loss= 7.554,itm_loss=0.4408,mlm_loss= 1.774,itc_loss= 5.339
+2022-07-29 20:32:45 - INFO - Epoch=2/8 	 step=23399 	 total_loss= 7.551,itm_loss=0.4405,mlm_loss= 1.774,itc_loss= 5.337
+2022-07-29 20:34:15 - INFO - Epoch=2/8 	 step=23499 	 total_loss= 7.549,itm_loss=0.4401,mlm_loss= 1.774,itc_loss= 5.335
+2022-07-29 20:35:45 - INFO - Epoch=2/8 	 step=23599 	 total_loss= 7.547,itm_loss=0.4399,mlm_loss= 1.774,itc_loss= 5.333
+2022-07-29 20:37:15 - INFO - Epoch=2/8 	 step=23699 	 total_loss= 7.545,itm_loss=0.4396,mlm_loss= 1.773,itc_loss= 5.331
+2022-07-29 20:38:45 - INFO - Epoch=2/8 	 step=23799 	 total_loss= 7.542,itm_loss=0.4393,mlm_loss= 1.773,itc_loss=  5.33
+2022-07-29 20:40:15 - INFO - Epoch=2/8 	 step=23899 	 total_loss= 7.539,itm_loss=0.4391,mlm_loss= 1.773,itc_loss= 5.327
+2022-07-29 20:41:44 - INFO - Epoch=2/8 	 step=23999 	 total_loss= 7.537,itm_loss=0.4388,mlm_loss= 1.772,itc_loss= 5.326
+2022-07-29 20:43:14 - INFO - Epoch=2/8 	 step=24099 	 total_loss= 7.534,itm_loss=0.4384,mlm_loss= 1.772,itc_loss= 5.324
+2022-07-29 20:44:44 - INFO - Epoch=2/8 	 step=24199 	 total_loss= 7.531,itm_loss=0.4381,mlm_loss= 1.771,itc_loss= 5.322
+2022-07-29 20:46:14 - INFO - Epoch=2/8 	 step=24299 	 total_loss= 7.529,itm_loss=0.4378,mlm_loss= 1.771,itc_loss=  5.32
+2022-07-29 20:47:44 - INFO - Epoch=2/8 	 step=24399 	 total_loss= 7.526,itm_loss=0.4375,mlm_loss= 1.771,itc_loss= 5.318
+2022-07-29 20:49:14 - INFO - Epoch=2/8 	 step=24499 	 total_loss= 7.523,itm_loss=0.4371,mlm_loss=  1.77,itc_loss= 5.316
+2022-07-29 20:50:43 - INFO - Epoch=2/8 	 step=24599 	 total_loss=  7.52,itm_loss=0.4368,mlm_loss=  1.77,itc_loss= 5.313
+2022-07-29 20:52:13 - INFO - Epoch=2/8 	 step=24699 	 total_loss= 7.518,itm_loss=0.4365,mlm_loss=  1.77,itc_loss= 5.312
+2022-07-29 20:53:43 - INFO - Epoch=2/8 	 step=24799 	 total_loss= 7.516,itm_loss=0.4362,mlm_loss=  1.77,itc_loss=  5.31
+2022-07-29 20:55:13 - INFO - Epoch=2/8 	 step=24899 	 total_loss= 7.514,itm_loss=0.4359,mlm_loss=  1.77,itc_loss= 5.308
+2022-07-29 20:56:43 - INFO - Epoch=2/8 	 step=24999 	 total_loss= 7.511,itm_loss=0.4357,mlm_loss= 1.769,itc_loss= 5.306
+2022-07-29 20:58:13 - INFO - Epoch=2/8 	 step=25099 	 total_loss= 7.509,itm_loss=0.4353,mlm_loss= 1.769,itc_loss= 5.305
+2022-07-29 20:59:43 - INFO - Epoch=2/8 	 step=25199 	 total_loss= 7.507,itm_loss= 0.435,mlm_loss= 1.769,itc_loss= 5.303
+2022-07-29 21:01:13 - INFO - Epoch=2/8 	 step=25299 	 total_loss= 7.505,itm_loss=0.4348,mlm_loss= 1.769,itc_loss= 5.301
+2022-07-29 21:02:42 - INFO - Epoch=2/8 	 step=25399 	 total_loss= 7.502,itm_loss=0.4345,mlm_loss= 1.768,itc_loss= 5.299
+2022-07-29 21:04:13 - INFO - Epoch=2/8 	 step=25499 	 total_loss= 7.499,itm_loss=0.4342,mlm_loss= 1.768,itc_loss= 5.297
+2022-07-29 21:05:42 - INFO - Epoch=2/8 	 step=25599 	 total_loss= 7.497,itm_loss=0.4339,mlm_loss= 1.768,itc_loss= 5.295
+2022-07-29 21:07:12 - INFO - Epoch=2/8 	 step=25699 	 total_loss= 7.495,itm_loss=0.4337,mlm_loss= 1.768,itc_loss= 5.293
+2022-07-29 21:08:42 - INFO - Epoch=2/8 	 step=25799 	 total_loss= 7.492,itm_loss=0.4333,mlm_loss= 1.768,itc_loss= 5.291
+2022-07-29 21:10:12 - INFO - Epoch=2/8 	 step=25899 	 total_loss=  7.49,itm_loss= 0.433,mlm_loss= 1.768,itc_loss= 5.289
+2022-07-29 21:11:42 - INFO - Epoch=2/8 	 step=25999 	 total_loss= 7.487,itm_loss=0.4327,mlm_loss= 1.768,itc_loss= 5.287
+2022-07-29 21:13:11 - INFO - Epoch=2/8 	 step=26099 	 total_loss= 7.484,itm_loss=0.4324,mlm_loss= 1.767,itc_loss= 5.285
+2022-07-29 21:14:41 - INFO - Epoch=2/8 	 step=26199 	 total_loss= 7.482,itm_loss=0.4321,mlm_loss= 1.767,itc_loss= 5.283
+2022-07-29 21:16:11 - INFO - Epoch=2/8 	 step=26299 	 total_loss=  7.48,itm_loss=0.4318,mlm_loss= 1.767,itc_loss= 5.281
+2022-07-29 21:17:41 - INFO - Epoch=2/8 	 step=26399 	 total_loss= 7.478,itm_loss=0.4315,mlm_loss= 1.767,itc_loss=  5.28
+2022-07-29 21:19:10 - INFO - Epoch=2/8 	 step=26499 	 total_loss= 7.476,itm_loss=0.4313,mlm_loss= 1.766,itc_loss= 5.278
+2022-07-29 21:20:40 - INFO - Epoch=2/8 	 step=26599 	 total_loss= 7.473,itm_loss= 0.431,mlm_loss= 1.766,itc_loss= 5.276
+2022-07-29 21:22:10 - INFO - Epoch=2/8 	 step=26699 	 total_loss= 7.471,itm_loss=0.4307,mlm_loss= 1.766,itc_loss= 5.275
+2022-07-29 21:23:40 - INFO - Epoch=2/8 	 step=26799 	 total_loss= 7.469,itm_loss=0.4305,mlm_loss= 1.766,itc_loss= 5.273
+2022-07-29 21:25:09 - INFO - Epoch=2/8 	 step=26899 	 total_loss= 7.468,itm_loss=0.4302,mlm_loss= 1.766,itc_loss= 5.272
+2022-07-29 21:26:39 - INFO - Epoch=2/8 	 step=26999 	 total_loss= 7.466,itm_loss=  0.43,mlm_loss= 1.766,itc_loss=  5.27
+2022-07-29 21:28:09 - INFO - Epoch=2/8 	 step=27099 	 total_loss= 7.464,itm_loss=0.4297,mlm_loss= 1.766,itc_loss= 5.268
+2022-07-29 21:29:39 - INFO - Epoch=2/8 	 step=27199 	 total_loss= 7.461,itm_loss=0.4294,mlm_loss= 1.765,itc_loss= 5.267
+2022-07-29 21:31:08 - INFO - Epoch=2/8 	 step=27299 	 total_loss= 7.459,itm_loss=0.4292,mlm_loss= 1.765,itc_loss= 5.265
+2022-07-29 21:32:38 - INFO - Epoch=2/8 	 step=27399 	 total_loss= 7.457,itm_loss=0.4289,mlm_loss= 1.765,itc_loss= 5.263
+2022-07-29 21:34:08 - INFO - Epoch=2/8 	 step=27499 	 total_loss= 7.455,itm_loss=0.4286,mlm_loss= 1.765,itc_loss= 5.261
+2022-07-29 21:47:13 - INFO - Epoch=3/8 	 step=27599 	 total_loss= 7.163,itm_loss=0.3899,mlm_loss= 1.713,itc_loss=  5.06
+2022-07-29 21:48:43 - INFO - Epoch=3/8 	 step=27699 	 total_loss=  7.12,itm_loss=0.3923,mlm_loss=  1.71,itc_loss= 5.017
+2022-07-29 21:50:13 - INFO - Epoch=3/8 	 step=27799 	 total_loss=  7.12,itm_loss=0.3917,mlm_loss= 1.723,itc_loss= 5.005
+2022-07-29 21:51:42 - INFO - Epoch=3/8 	 step=27899 	 total_loss= 7.109,itm_loss=0.3878,mlm_loss= 1.728,itc_loss= 4.994
+2022-07-29 21:53:12 - INFO - Epoch=3/8 	 step=27999 	 total_loss= 7.114,itm_loss=0.3881,mlm_loss=  1.73,itc_loss= 4.996
+2022-07-29 21:54:42 - INFO - Epoch=3/8 	 step=28099 	 total_loss= 7.122,itm_loss=0.3875,mlm_loss=  1.73,itc_loss= 5.004
+2022-07-29 21:56:12 - INFO - Epoch=3/8 	 step=28199 	 total_loss= 7.116,itm_loss= 0.387,mlm_loss=  1.73,itc_loss= 4.999
+2022-07-29 21:57:42 - INFO - Epoch=3/8 	 step=28299 	 total_loss= 7.108,itm_loss=0.3868,mlm_loss= 1.727,itc_loss= 4.993
+2022-07-29 21:59:12 - INFO - Epoch=3/8 	 step=28399 	 total_loss= 7.109,itm_loss=0.3875,mlm_loss= 1.726,itc_loss= 4.995
+2022-07-29 22:00:42 - INFO - Epoch=3/8 	 step=28499 	 total_loss= 7.107,itm_loss=0.3878,mlm_loss= 1.727,itc_loss= 4.992
+2022-07-29 22:02:11 - INFO - Epoch=3/8 	 step=28599 	 total_loss= 7.108,itm_loss=0.3882,mlm_loss= 1.728,itc_loss= 4.992
+2022-07-29 22:03:41 - INFO - Epoch=3/8 	 step=28699 	 total_loss= 7.108,itm_loss= 0.387,mlm_loss= 1.728,itc_loss= 4.993
+2022-07-29 22:05:11 - INFO - Epoch=3/8 	 step=28799 	 total_loss= 7.106,itm_loss= 0.387,mlm_loss= 1.728,itc_loss= 4.991
+2022-07-29 22:06:41 - INFO - Epoch=3/8 	 step=28899 	 total_loss= 7.105,itm_loss=0.3866,mlm_loss= 1.728,itc_loss=  4.99
+2022-07-29 22:08:10 - INFO - Epoch=3/8 	 step=28999 	 total_loss= 7.109,itm_loss=0.3865,mlm_loss= 1.729,itc_loss= 4.993
+2022-07-29 22:09:40 - INFO - Epoch=3/8 	 step=29099 	 total_loss= 7.106,itm_loss=0.3862,mlm_loss= 1.728,itc_loss= 4.992
+2022-07-29 22:11:10 - INFO - Epoch=3/8 	 step=29199 	 total_loss= 7.105,itm_loss=0.3855,mlm_loss=  1.73,itc_loss= 4.989
+2022-07-29 22:12:40 - INFO - Epoch=3/8 	 step=29299 	 total_loss= 7.103,itm_loss=0.3847,mlm_loss= 1.731,itc_loss= 4.987
+2022-07-29 22:14:09 - INFO - Epoch=3/8 	 step=29399 	 total_loss= 7.103,itm_loss=0.3845,mlm_loss= 1.731,itc_loss= 4.987
+2022-07-29 22:15:39 - INFO - Epoch=3/8 	 step=29499 	 total_loss=   7.1,itm_loss=0.3842,mlm_loss= 1.731,itc_loss= 4.986
+2022-07-29 22:17:09 - INFO - Epoch=3/8 	 step=29599 	 total_loss= 7.103,itm_loss=0.3842,mlm_loss=  1.73,itc_loss= 4.988
+2022-07-29 22:18:39 - INFO - Epoch=3/8 	 step=29699 	 total_loss= 7.101,itm_loss=0.3843,mlm_loss=  1.73,itc_loss= 4.987
+2022-07-29 22:20:09 - INFO - Epoch=3/8 	 step=29799 	 total_loss= 7.102,itm_loss=0.3843,mlm_loss= 1.732,itc_loss= 4.985
+2022-07-29 22:21:39 - INFO - Epoch=3/8 	 step=29899 	 total_loss= 7.101,itm_loss=0.3846,mlm_loss= 1.732,itc_loss= 4.984
+2022-07-29 22:23:08 - INFO - Epoch=3/8 	 step=29999 	 total_loss=   7.1,itm_loss=0.3845,mlm_loss= 1.731,itc_loss= 4.984
+2022-07-29 22:24:38 - INFO - Epoch=3/8 	 step=30099 	 total_loss= 7.098,itm_loss=0.3844,mlm_loss=  1.73,itc_loss= 4.983
+2022-07-29 22:26:08 - INFO - Epoch=3/8 	 step=30199 	 total_loss= 7.097,itm_loss=0.3842,mlm_loss=  1.73,itc_loss= 4.983
+2022-07-29 22:27:38 - INFO - Epoch=3/8 	 step=30299 	 total_loss= 7.096,itm_loss= 0.384,mlm_loss= 1.731,itc_loss= 4.981
+2022-07-29 22:29:07 - INFO - Epoch=3/8 	 step=30399 	 total_loss= 7.095,itm_loss=0.3838,mlm_loss= 1.731,itc_loss=  4.98
+2022-07-29 22:30:37 - INFO - Epoch=3/8 	 step=30499 	 total_loss= 7.094,itm_loss=0.3836,mlm_loss= 1.731,itc_loss=  4.98
+2022-07-29 22:32:07 - INFO - Epoch=3/8 	 step=30599 	 total_loss= 7.093,itm_loss=0.3835,mlm_loss=  1.73,itc_loss= 4.979
+2022-07-29 22:33:37 - INFO - Epoch=3/8 	 step=30699 	 total_loss= 7.091,itm_loss=0.3833,mlm_loss=  1.73,itc_loss= 4.977
+2022-07-29 22:35:06 - INFO - Epoch=3/8 	 step=30799 	 total_loss= 7.087,itm_loss=0.3829,mlm_loss= 1.729,itc_loss= 4.975
+2022-07-29 22:36:36 - INFO - Epoch=3/8 	 step=30899 	 total_loss= 7.084,itm_loss=0.3826,mlm_loss= 1.729,itc_loss= 4.972
+2022-07-29 22:38:06 - INFO - Epoch=3/8 	 step=30999 	 total_loss= 7.082,itm_loss=0.3823,mlm_loss=  1.73,itc_loss=  4.97
+2022-07-29 22:39:36 - INFO - Epoch=3/8 	 step=31099 	 total_loss=  7.08,itm_loss=0.3819,mlm_loss=  1.73,itc_loss= 4.968
+2022-07-29 22:41:05 - INFO - Epoch=3/8 	 step=31199 	 total_loss= 7.078,itm_loss=0.3818,mlm_loss= 1.731,itc_loss= 4.966
+2022-07-29 22:42:35 - INFO - Epoch=3/8 	 step=31299 	 total_loss= 7.076,itm_loss=0.3816,mlm_loss= 1.731,itc_loss= 4.964
+2022-07-29 22:44:05 - INFO - Epoch=3/8 	 step=31399 	 total_loss= 7.075,itm_loss=0.3814,mlm_loss=  1.73,itc_loss= 4.963
+2022-07-29 22:45:35 - INFO - Epoch=3/8 	 step=31499 	 total_loss= 7.072,itm_loss=0.3812,mlm_loss=  1.73,itc_loss= 4.961
+2022-07-29 22:47:04 - INFO - Epoch=3/8 	 step=31599 	 total_loss=  7.07,itm_loss=0.3808,mlm_loss=  1.73,itc_loss= 4.958
+2022-07-29 22:48:34 - INFO - Epoch=3/8 	 step=31699 	 total_loss= 7.069,itm_loss=0.3808,mlm_loss=  1.73,itc_loss= 4.958
+2022-07-29 22:50:04 - INFO - Epoch=3/8 	 step=31799 	 total_loss= 7.067,itm_loss=0.3807,mlm_loss=  1.73,itc_loss= 4.956
+2022-07-29 22:51:34 - INFO - Epoch=3/8 	 step=31899 	 total_loss= 7.067,itm_loss=0.3809,mlm_loss= 1.729,itc_loss= 4.957
+2022-07-29 22:53:03 - INFO - Epoch=3/8 	 step=31999 	 total_loss= 7.067,itm_loss=0.3809,mlm_loss= 1.729,itc_loss= 4.957
+2022-07-29 22:54:33 - INFO - Epoch=3/8 	 step=32099 	 total_loss= 7.067,itm_loss=0.3806,mlm_loss=  1.73,itc_loss= 4.956
+2022-07-29 22:56:03 - INFO - Epoch=3/8 	 step=32199 	 total_loss= 7.066,itm_loss=0.3805,mlm_loss=  1.73,itc_loss= 4.955
+2022-07-29 22:57:32 - INFO - Epoch=3/8 	 step=32299 	 total_loss= 7.065,itm_loss=0.3803,mlm_loss=  1.73,itc_loss= 4.954
+2022-07-29 22:59:02 - INFO - Epoch=3/8 	 step=32399 	 total_loss= 7.065,itm_loss=0.3802,mlm_loss=  1.73,itc_loss= 4.954
+2022-07-29 23:00:32 - INFO - Epoch=3/8 	 step=32499 	 total_loss= 7.064,itm_loss=  0.38,mlm_loss=  1.73,itc_loss= 4.954
+2022-07-29 23:02:02 - INFO - Epoch=3/8 	 step=32599 	 total_loss= 7.062,itm_loss=0.3799,mlm_loss=  1.73,itc_loss= 4.952
+2022-07-29 23:03:31 - INFO - Epoch=3/8 	 step=32699 	 total_loss= 7.059,itm_loss=0.3796,mlm_loss=  1.73,itc_loss=  4.95
+2022-07-29 23:05:01 - INFO - Epoch=3/8 	 step=32799 	 total_loss= 7.059,itm_loss=0.3794,mlm_loss=  1.73,itc_loss= 4.949
+2022-07-29 23:06:31 - INFO - Epoch=3/8 	 step=32899 	 total_loss= 7.057,itm_loss= 0.379,mlm_loss=  1.73,itc_loss= 4.947
+2022-07-29 23:08:00 - INFO - Epoch=3/8 	 step=32999 	 total_loss= 7.054,itm_loss=0.3787,mlm_loss=  1.73,itc_loss= 4.945
+2022-07-29 23:09:30 - INFO - Epoch=3/8 	 step=33099 	 total_loss= 7.051,itm_loss=0.3784,mlm_loss=  1.73,itc_loss= 4.943
+2022-07-29 23:11:00 - INFO - Epoch=3/8 	 step=33199 	 total_loss=  7.05,itm_loss=0.3781,mlm_loss=  1.73,itc_loss= 4.942
+2022-07-29 23:12:30 - INFO - Epoch=3/8 	 step=33299 	 total_loss= 7.048,itm_loss=0.3779,mlm_loss=  1.73,itc_loss= 4.941
+2022-07-29 23:13:59 - INFO - Epoch=3/8 	 step=33399 	 total_loss= 7.048,itm_loss=0.3776,mlm_loss=  1.73,itc_loss=  4.94
+2022-07-29 23:15:29 - INFO - Epoch=3/8 	 step=33499 	 total_loss= 7.048,itm_loss=0.3776,mlm_loss=  1.73,itc_loss=  4.94
+2022-07-29 23:16:59 - INFO - Epoch=3/8 	 step=33599 	 total_loss= 7.046,itm_loss=0.3773,mlm_loss=  1.73,itc_loss= 4.939
+2022-07-29 23:18:28 - INFO - Epoch=3/8 	 step=33699 	 total_loss= 7.044,itm_loss=0.3773,mlm_loss=  1.73,itc_loss= 4.937
+2022-07-29 23:19:58 - INFO - Epoch=3/8 	 step=33799 	 total_loss= 7.043,itm_loss=0.3772,mlm_loss=  1.73,itc_loss= 4.937
+2022-07-29 23:21:28 - INFO - Epoch=3/8 	 step=33899 	 total_loss= 7.042,itm_loss= 0.377,mlm_loss= 1.729,itc_loss= 4.935
+2022-07-29 23:22:57 - INFO - Epoch=3/8 	 step=33999 	 total_loss=  7.04,itm_loss=0.3769,mlm_loss= 1.729,itc_loss= 4.934
+2022-07-29 23:24:27 - INFO - Epoch=3/8 	 step=34099 	 total_loss= 7.038,itm_loss=0.3766,mlm_loss= 1.729,itc_loss= 4.932
+2022-07-29 23:25:57 - INFO - Epoch=3/8 	 step=34199 	 total_loss= 7.036,itm_loss=0.3764,mlm_loss= 1.729,itc_loss= 4.931
+2022-07-29 23:27:27 - INFO - Epoch=3/8 	 step=34299 	 total_loss= 7.035,itm_loss=0.3763,mlm_loss= 1.729,itc_loss=  4.93
+2022-07-29 23:28:57 - INFO - Epoch=3/8 	 step=34399 	 total_loss= 7.033,itm_loss=0.3761,mlm_loss= 1.729,itc_loss= 4.928
+2022-07-29 23:30:26 - INFO - Epoch=3/8 	 step=34499 	 total_loss= 7.031,itm_loss=0.3758,mlm_loss= 1.728,itc_loss= 4.927
+2022-07-29 23:31:56 - INFO - Epoch=3/8 	 step=34599 	 total_loss= 7.029,itm_loss=0.3756,mlm_loss= 1.728,itc_loss= 4.925
+2022-07-29 23:33:26 - INFO - Epoch=3/8 	 step=34699 	 total_loss= 7.028,itm_loss=0.3751,mlm_loss= 1.728,itc_loss= 4.925
+2022-07-29 23:34:55 - INFO - Epoch=3/8 	 step=34799 	 total_loss= 7.026,itm_loss= 0.375,mlm_loss= 1.728,itc_loss= 4.923
+2022-07-29 23:36:25 - INFO - Epoch=3/8 	 step=34899 	 total_loss= 7.024,itm_loss=0.3748,mlm_loss= 1.727,itc_loss= 4.922
+2022-07-29 23:37:55 - INFO - Epoch=3/8 	 step=34999 	 total_loss= 7.024,itm_loss=0.3746,mlm_loss= 1.727,itc_loss= 4.922
+2022-07-29 23:39:25 - INFO - Epoch=3/8 	 step=35099 	 total_loss= 7.023,itm_loss=0.3745,mlm_loss= 1.727,itc_loss= 4.921
+2022-07-29 23:40:54 - INFO - Epoch=3/8 	 step=35199 	 total_loss= 7.021,itm_loss=0.3743,mlm_loss= 1.727,itc_loss=  4.92
+2022-07-29 23:42:24 - INFO - Epoch=3/8 	 step=35299 	 total_loss=  7.02,itm_loss=0.3741,mlm_loss= 1.727,itc_loss= 4.919
+2022-07-29 23:43:54 - INFO - Epoch=3/8 	 step=35399 	 total_loss= 7.018,itm_loss=0.3738,mlm_loss= 1.727,itc_loss= 4.918
+2022-07-29 23:45:23 - INFO - Epoch=3/8 	 step=35499 	 total_loss= 7.017,itm_loss=0.3738,mlm_loss= 1.727,itc_loss= 4.916
+2022-07-29 23:46:53 - INFO - Epoch=3/8 	 step=35599 	 total_loss= 7.015,itm_loss=0.3736,mlm_loss= 1.727,itc_loss= 4.915
+2022-07-29 23:48:23 - INFO - Epoch=3/8 	 step=35699 	 total_loss= 7.013,itm_loss=0.3734,mlm_loss= 1.727,itc_loss= 4.913
+2022-07-29 23:49:53 - INFO - Epoch=3/8 	 step=35799 	 total_loss= 7.011,itm_loss=0.3731,mlm_loss= 1.726,itc_loss= 4.912
+2022-07-29 23:51:23 - INFO - Epoch=3/8 	 step=35899 	 total_loss= 7.011,itm_loss= 0.373,mlm_loss= 1.726,itc_loss= 4.911
+2022-07-29 23:52:53 - INFO - Epoch=3/8 	 step=35999 	 total_loss= 7.008,itm_loss=0.3728,mlm_loss= 1.726,itc_loss= 4.909
+2022-07-29 23:54:23 - INFO - Epoch=3/8 	 step=36099 	 total_loss= 7.007,itm_loss=0.3726,mlm_loss= 1.726,itc_loss= 4.909
+2022-07-29 23:55:52 - INFO - Epoch=3/8 	 step=36199 	 total_loss= 7.005,itm_loss=0.3724,mlm_loss= 1.726,itc_loss= 4.907
+2022-07-29 23:57:22 - INFO - Epoch=3/8 	 step=36299 	 total_loss= 7.004,itm_loss=0.3722,mlm_loss= 1.726,itc_loss= 4.906
+2022-07-29 23:58:52 - INFO - Epoch=3/8 	 step=36399 	 total_loss= 7.001,itm_loss= 0.372,mlm_loss= 1.725,itc_loss= 4.904
+2022-07-30 00:00:22 - INFO - Epoch=3/8 	 step=36499 	 total_loss=   7.0,itm_loss=0.3718,mlm_loss= 1.725,itc_loss= 4.903
+2022-07-30 00:01:52 - INFO - Epoch=3/8 	 step=36599 	 total_loss= 6.998,itm_loss=0.3716,mlm_loss= 1.725,itc_loss= 4.902
+2022-07-30 00:03:21 - INFO - Epoch=3/8 	 step=36699 	 total_loss= 6.997,itm_loss=0.3714,mlm_loss= 1.725,itc_loss= 4.901
+2022-07-30 00:04:51 - INFO - Epoch=3/8 	 step=36799 	 total_loss= 6.997,itm_loss=0.3713,mlm_loss= 1.725,itc_loss= 4.901
+2022-07-30 00:06:21 - INFO - Epoch=3/8 	 step=36899 	 total_loss= 6.995,itm_loss=0.3711,mlm_loss= 1.724,itc_loss= 4.899
+2022-07-30 00:07:50 - INFO - Epoch=3/8 	 step=36999 	 total_loss= 6.993,itm_loss=0.3709,mlm_loss= 1.724,itc_loss= 4.898
+2022-07-30 00:09:20 - INFO - Epoch=3/8 	 step=37099 	 total_loss= 6.991,itm_loss=0.3708,mlm_loss= 1.724,itc_loss= 4.896
+2022-07-30 00:10:50 - INFO - Epoch=3/8 	 step=37199 	 total_loss=  6.99,itm_loss=0.3706,mlm_loss= 1.724,itc_loss= 4.895
+2022-07-30 00:12:20 - INFO - Epoch=3/8 	 step=37299 	 total_loss= 6.988,itm_loss=0.3705,mlm_loss= 1.724,itc_loss= 4.894
+2022-07-30 00:13:49 - INFO - Epoch=3/8 	 step=37399 	 total_loss= 6.987,itm_loss=0.3703,mlm_loss= 1.724,itc_loss= 4.893
+2022-07-30 00:15:19 - INFO - Epoch=3/8 	 step=37499 	 total_loss= 6.986,itm_loss=0.3701,mlm_loss= 1.724,itc_loss= 4.892
+2022-07-30 00:16:49 - INFO - Epoch=3/8 	 step=37599 	 total_loss= 6.985,itm_loss=0.3699,mlm_loss= 1.723,itc_loss= 4.891
+2022-07-30 00:18:18 - INFO - Epoch=3/8 	 step=37699 	 total_loss= 6.983,itm_loss=0.3697,mlm_loss= 1.723,itc_loss=  4.89
+2022-07-30 00:19:48 - INFO - Epoch=3/8 	 step=37799 	 total_loss= 6.981,itm_loss=0.3694,mlm_loss= 1.723,itc_loss= 4.889
+2022-07-30 00:21:18 - INFO - Epoch=3/8 	 step=37899 	 total_loss= 6.979,itm_loss=0.3691,mlm_loss= 1.722,itc_loss= 4.888
+2022-07-30 00:22:48 - INFO - Epoch=3/8 	 step=37999 	 total_loss= 6.978,itm_loss=0.3689,mlm_loss= 1.722,itc_loss= 4.887
+2022-07-30 00:24:17 - INFO - Epoch=3/8 	 step=38099 	 total_loss= 6.977,itm_loss=0.3688,mlm_loss= 1.722,itc_loss= 4.886
+2022-07-30 00:25:47 - INFO - Epoch=3/8 	 step=38199 	 total_loss= 6.975,itm_loss=0.3685,mlm_loss= 1.722,itc_loss= 4.884
+2022-07-30 00:27:17 - INFO - Epoch=3/8 	 step=38299 	 total_loss= 6.973,itm_loss=0.3683,mlm_loss= 1.722,itc_loss= 4.882
+2022-07-30 00:28:47 - INFO - Epoch=3/8 	 step=38399 	 total_loss= 6.972,itm_loss=0.3682,mlm_loss= 1.722,itc_loss= 4.882
+2022-07-30 00:30:16 - INFO - Epoch=3/8 	 step=38499 	 total_loss= 6.971,itm_loss= 0.368,mlm_loss= 1.722,itc_loss= 4.881
+2022-07-30 00:31:46 - INFO - Epoch=3/8 	 step=38599 	 total_loss=  6.97,itm_loss=0.3678,mlm_loss= 1.722,itc_loss=  4.88
+2022-07-30 00:33:16 - INFO - Epoch=3/8 	 step=38699 	 total_loss= 6.968,itm_loss=0.3675,mlm_loss= 1.722,itc_loss= 4.878
+2022-07-30 00:34:45 - INFO - Epoch=3/8 	 step=38799 	 total_loss= 6.967,itm_loss=0.3674,mlm_loss= 1.722,itc_loss= 4.878
+2022-07-30 00:36:15 - INFO - Epoch=3/8 	 step=38899 	 total_loss= 6.965,itm_loss=0.3672,mlm_loss= 1.722,itc_loss= 4.876
+2022-07-30 00:37:45 - INFO - Epoch=3/8 	 step=38999 	 total_loss= 6.964,itm_loss= 0.367,mlm_loss= 1.722,itc_loss= 4.875
+2022-07-30 00:39:15 - INFO - Epoch=3/8 	 step=39099 	 total_loss= 6.962,itm_loss=0.3668,mlm_loss= 1.722,itc_loss= 4.874
+2022-07-30 00:40:44 - INFO - Epoch=3/8 	 step=39199 	 total_loss= 6.961,itm_loss=0.3666,mlm_loss= 1.722,itc_loss= 4.872
+2022-07-30 00:42:14 - INFO - Epoch=3/8 	 step=39299 	 total_loss= 6.959,itm_loss=0.3664,mlm_loss= 1.722,itc_loss= 4.871
+2022-07-30 00:43:44 - INFO - Epoch=3/8 	 step=39399 	 total_loss= 6.958,itm_loss=0.3662,mlm_loss= 1.722,itc_loss= 4.869
+2022-07-30 00:45:14 - INFO - Epoch=3/8 	 step=39499 	 total_loss= 6.956,itm_loss= 0.366,mlm_loss= 1.722,itc_loss= 4.868
+2022-07-30 00:46:43 - INFO - Epoch=3/8 	 step=39599 	 total_loss= 6.954,itm_loss=0.3657,mlm_loss= 1.722,itc_loss= 4.866
+2022-07-30 00:48:13 - INFO - Epoch=3/8 	 step=39699 	 total_loss= 6.953,itm_loss=0.3655,mlm_loss= 1.722,itc_loss= 4.865
+2022-07-30 00:49:43 - INFO - Epoch=3/8 	 step=39799 	 total_loss= 6.951,itm_loss=0.3654,mlm_loss= 1.721,itc_loss= 4.864
+2022-07-30 00:51:13 - INFO - Epoch=3/8 	 step=39899 	 total_loss= 6.949,itm_loss=0.3651,mlm_loss= 1.721,itc_loss= 4.863
+2022-07-30 00:52:43 - INFO - Epoch=3/8 	 step=39999 	 total_loss= 6.947,itm_loss=0.3648,mlm_loss= 1.721,itc_loss= 4.862
+2022-07-30 00:54:13 - INFO - Epoch=3/8 	 step=40099 	 total_loss= 6.946,itm_loss=0.3647,mlm_loss= 1.721,itc_loss= 4.861
+2022-07-30 00:55:43 - INFO - Epoch=3/8 	 step=40199 	 total_loss= 6.945,itm_loss=0.3645,mlm_loss= 1.721,itc_loss=  4.86
+2022-07-30 00:57:12 - INFO - Epoch=3/8 	 step=40299 	 total_loss= 6.944,itm_loss=0.3644,mlm_loss= 1.721,itc_loss= 4.859
+2022-07-30 00:58:42 - INFO - Epoch=3/8 	 step=40399 	 total_loss= 6.942,itm_loss=0.3641,mlm_loss= 1.721,itc_loss= 4.858
+2022-07-30 01:00:12 - INFO - Epoch=3/8 	 step=40499 	 total_loss= 6.941,itm_loss= 0.364,mlm_loss= 1.721,itc_loss= 4.857
+2022-07-30 01:01:42 - INFO - Epoch=3/8 	 step=40599 	 total_loss=  6.94,itm_loss=0.3639,mlm_loss= 1.721,itc_loss= 4.856
+2022-07-30 01:03:12 - INFO - Epoch=3/8 	 step=40699 	 total_loss= 6.939,itm_loss=0.3637,mlm_loss= 1.721,itc_loss= 4.855
+2022-07-30 01:04:41 - INFO - Epoch=3/8 	 step=40799 	 total_loss= 6.938,itm_loss=0.3635,mlm_loss= 1.721,itc_loss= 4.854
+2022-07-30 01:06:11 - INFO - Epoch=3/8 	 step=40899 	 total_loss= 6.937,itm_loss=0.3633,mlm_loss= 1.721,itc_loss= 4.853
+2022-07-30 01:07:41 - INFO - Epoch=3/8 	 step=40999 	 total_loss= 6.935,itm_loss=0.3631,mlm_loss=  1.72,itc_loss= 4.851
+2022-07-30 01:09:11 - INFO - Epoch=3/8 	 step=41099 	 total_loss= 6.934,itm_loss= 0.363,mlm_loss=  1.72,itc_loss=  4.85
+2022-07-30 01:10:40 - INFO - Epoch=3/8 	 step=41199 	 total_loss= 6.932,itm_loss=0.3628,mlm_loss=  1.72,itc_loss= 4.849
+2022-07-30 01:14:36 - INFO - Epoch=4/8 	 step=41299 	 total_loss= 6.675,itm_loss=0.3277,mlm_loss= 1.648,itc_loss= 4.699
+2022-07-30 01:16:05 - INFO - Epoch=4/8 	 step=41399 	 total_loss= 6.679,itm_loss=0.3355,mlm_loss= 1.683,itc_loss= 4.661
+2022-07-30 01:17:35 - INFO - Epoch=4/8 	 step=41499 	 total_loss= 6.697,itm_loss=0.3377,mlm_loss= 1.686,itc_loss= 4.673
+2022-07-30 01:19:05 - INFO - Epoch=4/8 	 step=41599 	 total_loss= 6.685,itm_loss=0.3343,mlm_loss= 1.693,itc_loss= 4.658
+2022-07-30 01:20:35 - INFO - Epoch=4/8 	 step=41699 	 total_loss= 6.702,itm_loss=0.3342,mlm_loss= 1.699,itc_loss= 4.669
+2022-07-30 01:22:04 - INFO - Epoch=4/8 	 step=41799 	 total_loss= 6.712,itm_loss=0.3349,mlm_loss= 1.701,itc_loss= 4.676
+2022-07-30 01:23:34 - INFO - Epoch=4/8 	 step=41899 	 total_loss= 6.718,itm_loss=0.3343,mlm_loss= 1.705,itc_loss= 4.679
+2022-07-30 01:25:04 - INFO - Epoch=4/8 	 step=41999 	 total_loss= 6.713,itm_loss=0.3335,mlm_loss= 1.703,itc_loss= 4.677
+2022-07-30 01:26:34 - INFO - Epoch=4/8 	 step=42099 	 total_loss= 6.709,itm_loss=0.3338,mlm_loss= 1.701,itc_loss= 4.674
+2022-07-30 01:28:03 - INFO - Epoch=4/8 	 step=42199 	 total_loss= 6.703,itm_loss=0.3329,mlm_loss=   1.7,itc_loss=  4.67
+2022-07-30 01:29:33 - INFO - Epoch=4/8 	 step=42299 	 total_loss= 6.702,itm_loss=0.3338,mlm_loss=   1.7,itc_loss= 4.668
+2022-07-30 01:31:03 - INFO - Epoch=4/8 	 step=42399 	 total_loss= 6.703,itm_loss=0.3337,mlm_loss= 1.699,itc_loss=  4.67
+2022-07-30 01:32:33 - INFO - Epoch=4/8 	 step=42499 	 total_loss=   6.7,itm_loss=0.3323,mlm_loss= 1.701,itc_loss= 4.666
+2022-07-30 01:34:02 - INFO - Epoch=4/8 	 step=42599 	 total_loss= 6.702,itm_loss=0.3325,mlm_loss= 1.702,itc_loss= 4.667
+2022-07-30 01:35:32 - INFO - Epoch=4/8 	 step=42699 	 total_loss= 6.704,itm_loss=0.3322,mlm_loss= 1.701,itc_loss= 4.671
+2022-07-30 01:37:02 - INFO - Epoch=4/8 	 step=42799 	 total_loss= 6.703,itm_loss=0.3319,mlm_loss= 1.701,itc_loss= 4.671
+2022-07-30 01:38:32 - INFO - Epoch=4/8 	 step=42899 	 total_loss= 6.702,itm_loss=0.3311,mlm_loss= 1.701,itc_loss= 4.671
+2022-07-30 01:40:01 - INFO - Epoch=4/8 	 step=42999 	 total_loss= 6.699,itm_loss=0.3302,mlm_loss= 1.702,itc_loss= 4.667
+2022-07-30 01:41:31 - INFO - Epoch=4/8 	 step=43099 	 total_loss= 6.699,itm_loss=0.3299,mlm_loss= 1.702,itc_loss= 4.668
+2022-07-30 01:43:01 - INFO - Epoch=4/8 	 step=43199 	 total_loss= 6.698,itm_loss=0.3296,mlm_loss= 1.702,itc_loss= 4.666
+2022-07-30 01:44:31 - INFO - Epoch=4/8 	 step=43299 	 total_loss= 6.699,itm_loss=0.3295,mlm_loss= 1.702,itc_loss= 4.668
+2022-07-30 01:46:01 - INFO - Epoch=4/8 	 step=43399 	 total_loss= 6.699,itm_loss=0.3293,mlm_loss= 1.701,itc_loss= 4.669
+2022-07-30 01:47:30 - INFO - Epoch=4/8 	 step=43499 	 total_loss=   6.7,itm_loss=0.3293,mlm_loss= 1.703,itc_loss= 4.669
+2022-07-30 01:49:00 - INFO - Epoch=4/8 	 step=43599 	 total_loss=   6.7,itm_loss=0.3294,mlm_loss= 1.703,itc_loss= 4.667
+2022-07-30 01:50:30 - INFO - Epoch=4/8 	 step=43699 	 total_loss= 6.701,itm_loss=0.3295,mlm_loss= 1.702,itc_loss= 4.669
+2022-07-30 01:51:59 - INFO - Epoch=4/8 	 step=43799 	 total_loss=   6.7,itm_loss=0.3298,mlm_loss= 1.702,itc_loss= 4.668
+2022-07-30 01:53:29 - INFO - Epoch=4/8 	 step=43899 	 total_loss= 6.701,itm_loss=0.3298,mlm_loss= 1.702,itc_loss=  4.67
+2022-07-30 01:54:59 - INFO - Epoch=4/8 	 step=43999 	 total_loss= 6.699,itm_loss=0.3296,mlm_loss= 1.703,itc_loss= 4.667
+2022-07-30 01:56:29 - INFO - Epoch=4/8 	 step=44099 	 total_loss= 6.699,itm_loss=0.3299,mlm_loss= 1.702,itc_loss= 4.666
+2022-07-30 01:57:58 - INFO - Epoch=4/8 	 step=44199 	 total_loss= 6.698,itm_loss=0.3295,mlm_loss= 1.702,itc_loss= 4.667
+2022-07-30 01:59:28 - INFO - Epoch=4/8 	 step=44299 	 total_loss= 6.697,itm_loss=0.3293,mlm_loss= 1.702,itc_loss= 4.665
+2022-07-30 02:00:58 - INFO - Epoch=4/8 	 step=44399 	 total_loss= 6.695,itm_loss= 0.329,mlm_loss= 1.702,itc_loss= 4.664
+2022-07-30 02:02:28 - INFO - Epoch=4/8 	 step=44499 	 total_loss= 6.693,itm_loss= 0.329,mlm_loss= 1.702,itc_loss= 4.662
+2022-07-30 02:03:58 - INFO - Epoch=4/8 	 step=44599 	 total_loss=  6.69,itm_loss=0.3286,mlm_loss= 1.702,itc_loss=  4.66
+2022-07-30 02:05:28 - INFO - Epoch=4/8 	 step=44699 	 total_loss= 6.689,itm_loss=0.3284,mlm_loss= 1.702,itc_loss= 4.658
+2022-07-30 02:06:58 - INFO - Epoch=4/8 	 step=44799 	 total_loss= 6.688,itm_loss=0.3281,mlm_loss= 1.703,itc_loss= 4.657
+2022-07-30 02:08:27 - INFO - Epoch=4/8 	 step=44899 	 total_loss= 6.687,itm_loss= 0.328,mlm_loss= 1.703,itc_loss= 4.656
+2022-07-30 02:09:57 - INFO - Epoch=4/8 	 step=44999 	 total_loss= 6.684,itm_loss=0.3277,mlm_loss= 1.703,itc_loss= 4.654
+2022-07-30 02:11:27 - INFO - Epoch=4/8 	 step=45099 	 total_loss= 6.684,itm_loss=0.3276,mlm_loss= 1.703,itc_loss= 4.654
+2022-07-30 02:12:57 - INFO - Epoch=4/8 	 step=45199 	 total_loss= 6.683,itm_loss=0.3275,mlm_loss= 1.702,itc_loss= 4.653
+2022-07-30 02:14:26 - INFO - Epoch=4/8 	 step=45299 	 total_loss=  6.68,itm_loss=0.3273,mlm_loss= 1.702,itc_loss=  4.65
+2022-07-30 02:15:56 - INFO - Epoch=4/8 	 step=45399 	 total_loss= 6.679,itm_loss=0.3271,mlm_loss= 1.702,itc_loss=  4.65
+2022-07-30 02:17:26 - INFO - Epoch=4/8 	 step=45499 	 total_loss= 6.679,itm_loss=0.3273,mlm_loss= 1.702,itc_loss= 4.649
+2022-07-30 02:18:56 - INFO - Epoch=4/8 	 step=45599 	 total_loss= 6.679,itm_loss=0.3274,mlm_loss= 1.702,itc_loss=  4.65
+2022-07-30 02:20:26 - INFO - Epoch=4/8 	 step=45699 	 total_loss= 6.679,itm_loss=0.3274,mlm_loss= 1.702,itc_loss=  4.65
+2022-07-30 02:21:55 - INFO - Epoch=4/8 	 step=45799 	 total_loss= 6.681,itm_loss=0.3274,mlm_loss= 1.703,itc_loss=  4.65
+2022-07-30 02:23:25 - INFO - Epoch=4/8 	 step=45899 	 total_loss=  6.68,itm_loss=0.3272,mlm_loss= 1.704,itc_loss= 4.649
+2022-07-30 02:24:55 - INFO - Epoch=4/8 	 step=45999 	 total_loss= 6.681,itm_loss=0.3272,mlm_loss= 1.703,itc_loss=  4.65
+2022-07-30 02:26:25 - INFO - Epoch=4/8 	 step=46099 	 total_loss=  6.68,itm_loss=0.3271,mlm_loss= 1.703,itc_loss=  4.65
+2022-07-30 02:27:54 - INFO - Epoch=4/8 	 step=46199 	 total_loss= 6.679,itm_loss=0.3269,mlm_loss= 1.703,itc_loss= 4.649
+2022-07-30 02:29:24 - INFO - Epoch=4/8 	 step=46299 	 total_loss= 6.678,itm_loss=0.3268,mlm_loss= 1.703,itc_loss= 4.648
+2022-07-30 02:30:54 - INFO - Epoch=4/8 	 step=46399 	 total_loss= 6.676,itm_loss=0.3267,mlm_loss= 1.703,itc_loss= 4.647
+2022-07-30 02:32:24 - INFO - Epoch=4/8 	 step=46499 	 total_loss= 6.676,itm_loss=0.3265,mlm_loss= 1.704,itc_loss= 4.646
+2022-07-30 02:33:53 - INFO - Epoch=4/8 	 step=46599 	 total_loss= 6.674,itm_loss=0.3264,mlm_loss= 1.704,itc_loss= 4.644
+2022-07-30 02:35:23 - INFO - Epoch=4/8 	 step=46699 	 total_loss= 6.672,itm_loss=0.3261,mlm_loss= 1.704,itc_loss= 4.642
+2022-07-30 02:36:53 - INFO - Epoch=4/8 	 step=46799 	 total_loss= 6.671,itm_loss=0.3261,mlm_loss= 1.703,itc_loss= 4.641
+2022-07-30 02:38:23 - INFO - Epoch=4/8 	 step=46899 	 total_loss=  6.67,itm_loss=0.3258,mlm_loss= 1.703,itc_loss=  4.64
+2022-07-30 02:39:53 - INFO - Epoch=4/8 	 step=46999 	 total_loss= 6.667,itm_loss=0.3256,mlm_loss= 1.703,itc_loss= 4.639
+2022-07-30 02:41:22 - INFO - Epoch=4/8 	 step=47099 	 total_loss= 6.667,itm_loss=0.3254,mlm_loss= 1.703,itc_loss= 4.638
+2022-07-30 02:42:52 - INFO - Epoch=4/8 	 step=47199 	 total_loss= 6.666,itm_loss=0.3253,mlm_loss= 1.703,itc_loss= 4.638
+2022-07-30 02:44:22 - INFO - Epoch=4/8 	 step=47299 	 total_loss= 6.666,itm_loss= 0.325,mlm_loss= 1.704,itc_loss= 4.637
+2022-07-30 02:45:52 - INFO - Epoch=4/8 	 step=47399 	 total_loss= 6.665,itm_loss=0.3249,mlm_loss= 1.703,itc_loss= 4.637
+2022-07-30 02:47:21 - INFO - Epoch=4/8 	 step=47499 	 total_loss= 6.663,itm_loss=0.3248,mlm_loss= 1.703,itc_loss= 4.636
+2022-07-30 02:48:51 - INFO - Epoch=4/8 	 step=47599 	 total_loss= 6.662,itm_loss=0.3248,mlm_loss= 1.702,itc_loss= 4.635
+2022-07-30 02:50:21 - INFO - Epoch=4/8 	 step=47699 	 total_loss= 6.661,itm_loss=0.3247,mlm_loss= 1.702,itc_loss= 4.634
+2022-07-30 02:51:51 - INFO - Epoch=4/8 	 step=47799 	 total_loss=  6.66,itm_loss=0.3246,mlm_loss= 1.702,itc_loss= 4.634
+2022-07-30 02:53:21 - INFO - Epoch=4/8 	 step=47899 	 total_loss= 6.658,itm_loss=0.3245,mlm_loss= 1.701,itc_loss= 4.632
+2022-07-30 02:54:50 - INFO - Epoch=4/8 	 step=47999 	 total_loss= 6.657,itm_loss=0.3244,mlm_loss= 1.701,itc_loss= 4.632
+2022-07-30 02:56:20 - INFO - Epoch=4/8 	 step=48099 	 total_loss= 6.656,itm_loss=0.3242,mlm_loss= 1.701,itc_loss= 4.631
+2022-07-30 02:57:50 - INFO - Epoch=4/8 	 step=48199 	 total_loss= 6.655,itm_loss=0.3242,mlm_loss= 1.701,itc_loss=  4.63
+2022-07-30 02:59:20 - INFO - Epoch=4/8 	 step=48299 	 total_loss= 6.653,itm_loss= 0.324,mlm_loss= 1.701,itc_loss= 4.628
+2022-07-30 03:00:49 - INFO - Epoch=4/8 	 step=48399 	 total_loss= 6.651,itm_loss=0.3236,mlm_loss= 1.701,itc_loss= 4.627
+2022-07-30 03:02:19 - INFO - Epoch=4/8 	 step=48499 	 total_loss=  6.65,itm_loss=0.3234,mlm_loss=   1.7,itc_loss= 4.626
+2022-07-30 03:03:49 - INFO - Epoch=4/8 	 step=48599 	 total_loss= 6.649,itm_loss=0.3233,mlm_loss=   1.7,itc_loss= 4.626
+2022-07-30 03:05:18 - INFO - Epoch=4/8 	 step=48699 	 total_loss= 6.649,itm_loss=0.3232,mlm_loss=   1.7,itc_loss= 4.626
+2022-07-30 03:06:48 - INFO - Epoch=4/8 	 step=48799 	 total_loss= 6.648,itm_loss= 0.323,mlm_loss=   1.7,itc_loss= 4.625
+2022-07-30 03:08:18 - INFO - Epoch=4/8 	 step=48899 	 total_loss= 6.647,itm_loss=0.3229,mlm_loss=   1.7,itc_loss= 4.625
+2022-07-30 03:09:48 - INFO - Epoch=4/8 	 step=48999 	 total_loss= 6.646,itm_loss=0.3229,mlm_loss=   1.7,itc_loss= 4.623
+2022-07-30 03:11:17 - INFO - Epoch=4/8 	 step=49099 	 total_loss= 6.645,itm_loss=0.3226,mlm_loss=   1.7,itc_loss= 4.622
+2022-07-30 03:12:47 - INFO - Epoch=4/8 	 step=49199 	 total_loss= 6.644,itm_loss=0.3225,mlm_loss=   1.7,itc_loss= 4.621
+2022-07-30 03:14:17 - INFO - Epoch=4/8 	 step=49299 	 total_loss= 6.642,itm_loss=0.3224,mlm_loss=   1.7,itc_loss=  4.62
+2022-07-30 03:15:47 - INFO - Epoch=4/8 	 step=49399 	 total_loss= 6.641,itm_loss=0.3223,mlm_loss=   1.7,itc_loss= 4.619
+2022-07-30 03:17:16 - INFO - Epoch=4/8 	 step=49499 	 total_loss= 6.639,itm_loss=0.3221,mlm_loss=   1.7,itc_loss= 4.618
+2022-07-30 03:18:46 - INFO - Epoch=4/8 	 step=49599 	 total_loss= 6.639,itm_loss= 0.322,mlm_loss= 1.699,itc_loss= 4.617
+2022-07-30 03:20:16 - INFO - Epoch=4/8 	 step=49699 	 total_loss= 6.638,itm_loss=0.3219,mlm_loss= 1.699,itc_loss= 4.616
+2022-07-30 03:21:45 - INFO - Epoch=4/8 	 step=49799 	 total_loss= 6.636,itm_loss=0.3217,mlm_loss= 1.699,itc_loss= 4.615
+2022-07-30 03:23:15 - INFO - Epoch=4/8 	 step=49899 	 total_loss= 6.635,itm_loss=0.3215,mlm_loss= 1.699,itc_loss= 4.614
+2022-07-30 03:24:45 - INFO - Epoch=4/8 	 step=49999 	 total_loss= 6.634,itm_loss=0.3213,mlm_loss= 1.699,itc_loss= 4.613
+2022-07-30 03:26:15 - INFO - Epoch=4/8 	 step=50099 	 total_loss= 6.631,itm_loss=0.3212,mlm_loss= 1.699,itc_loss= 4.611
+2022-07-30 03:27:44 - INFO - Epoch=4/8 	 step=50199 	 total_loss=  6.63,itm_loss= 0.321,mlm_loss= 1.699,itc_loss=  4.61
+2022-07-30 03:29:14 - INFO - Epoch=4/8 	 step=50299 	 total_loss= 6.629,itm_loss=0.3209,mlm_loss= 1.699,itc_loss= 4.609
+2022-07-30 03:30:44 - INFO - Epoch=4/8 	 step=50399 	 total_loss= 6.628,itm_loss=0.3207,mlm_loss= 1.699,itc_loss= 4.608
+2022-07-30 03:32:14 - INFO - Epoch=4/8 	 step=50499 	 total_loss= 6.628,itm_loss=0.3207,mlm_loss= 1.699,itc_loss= 4.608
+2022-07-30 03:33:43 - INFO - Epoch=4/8 	 step=50599 	 total_loss= 6.627,itm_loss=0.3206,mlm_loss= 1.699,itc_loss= 4.607
+2022-07-30 03:35:13 - INFO - Epoch=4/8 	 step=50699 	 total_loss= 6.625,itm_loss=0.3204,mlm_loss= 1.699,itc_loss= 4.606
+2022-07-30 03:36:43 - INFO - Epoch=4/8 	 step=50799 	 total_loss= 6.624,itm_loss=0.3203,mlm_loss= 1.699,itc_loss= 4.605
+2022-07-30 03:38:13 - INFO - Epoch=4/8 	 step=50899 	 total_loss= 6.622,itm_loss=0.3201,mlm_loss= 1.699,itc_loss= 4.603
+2022-07-30 03:39:42 - INFO - Epoch=4/8 	 step=50999 	 total_loss= 6.621,itm_loss=  0.32,mlm_loss= 1.699,itc_loss= 4.602
+2022-07-30 03:41:12 - INFO - Epoch=4/8 	 step=51099 	 total_loss=  6.62,itm_loss=0.3199,mlm_loss= 1.699,itc_loss= 4.601
+2022-07-30 03:42:42 - INFO - Epoch=4/8 	 step=51199 	 total_loss= 6.619,itm_loss=0.3196,mlm_loss= 1.698,itc_loss= 4.601
+2022-07-30 03:44:12 - INFO - Epoch=4/8 	 step=51299 	 total_loss= 6.617,itm_loss=0.3195,mlm_loss= 1.698,itc_loss=   4.6
+2022-07-30 03:45:41 - INFO - Epoch=4/8 	 step=51399 	 total_loss= 6.616,itm_loss=0.3193,mlm_loss= 1.698,itc_loss= 4.598
+2022-07-30 03:47:11 - INFO - Epoch=4/8 	 step=51499 	 total_loss= 6.614,itm_loss=0.3191,mlm_loss= 1.698,itc_loss= 4.598
+2022-07-30 03:48:41 - INFO - Epoch=4/8 	 step=51599 	 total_loss= 6.613,itm_loss=0.3189,mlm_loss= 1.697,itc_loss= 4.597
+2022-07-30 03:50:10 - INFO - Epoch=4/8 	 step=51699 	 total_loss= 6.612,itm_loss=0.3187,mlm_loss= 1.697,itc_loss= 4.596
+2022-07-30 03:51:40 - INFO - Epoch=4/8 	 step=51799 	 total_loss=  6.61,itm_loss=0.3186,mlm_loss= 1.697,itc_loss= 4.595
+2022-07-30 03:53:11 - INFO - Epoch=4/8 	 step=51899 	 total_loss= 6.609,itm_loss=0.3184,mlm_loss= 1.697,itc_loss= 4.593
+2022-07-30 03:54:41 - INFO - Epoch=4/8 	 step=51999 	 total_loss= 6.607,itm_loss=0.3181,mlm_loss= 1.697,itc_loss= 4.592
+2022-07-30 03:56:11 - INFO - Epoch=4/8 	 step=52099 	 total_loss= 6.606,itm_loss=0.3179,mlm_loss= 1.697,itc_loss= 4.591
+2022-07-30 03:57:40 - INFO - Epoch=4/8 	 step=52199 	 total_loss= 6.605,itm_loss=0.3177,mlm_loss= 1.697,itc_loss=  4.59
+2022-07-30 03:59:10 - INFO - Epoch=4/8 	 step=52299 	 total_loss= 6.604,itm_loss=0.3176,mlm_loss= 1.697,itc_loss= 4.589
+2022-07-30 04:00:40 - INFO - Epoch=4/8 	 step=52399 	 total_loss= 6.602,itm_loss=0.3174,mlm_loss= 1.697,itc_loss= 4.588
+2022-07-30 04:02:09 - INFO - Epoch=4/8 	 step=52499 	 total_loss= 6.601,itm_loss=0.3172,mlm_loss= 1.697,itc_loss= 4.587
+2022-07-30 04:03:39 - INFO - Epoch=4/8 	 step=52599 	 total_loss=   6.6,itm_loss= 0.317,mlm_loss= 1.697,itc_loss= 4.586
+2022-07-30 04:05:09 - INFO - Epoch=4/8 	 step=52699 	 total_loss= 6.599,itm_loss=0.3168,mlm_loss= 1.697,itc_loss= 4.585
+2022-07-30 04:06:39 - INFO - Epoch=4/8 	 step=52799 	 total_loss= 6.598,itm_loss=0.3167,mlm_loss= 1.697,itc_loss= 4.585
+2022-07-30 04:08:08 - INFO - Epoch=4/8 	 step=52899 	 total_loss= 6.596,itm_loss=0.3165,mlm_loss= 1.697,itc_loss= 4.583
+2022-07-30 04:09:38 - INFO - Epoch=4/8 	 step=52999 	 total_loss= 6.595,itm_loss=0.3164,mlm_loss= 1.697,itc_loss= 4.582
+2022-07-30 04:11:08 - INFO - Epoch=4/8 	 step=53099 	 total_loss= 6.594,itm_loss=0.3162,mlm_loss= 1.697,itc_loss= 4.581
+2022-07-30 04:12:37 - INFO - Epoch=4/8 	 step=53199 	 total_loss= 6.592,itm_loss= 0.316,mlm_loss= 1.697,itc_loss=  4.58
+2022-07-30 04:14:07 - INFO - Epoch=4/8 	 step=53299 	 total_loss=  6.59,itm_loss=0.3158,mlm_loss= 1.696,itc_loss= 4.578
+2022-07-30 04:15:37 - INFO - Epoch=4/8 	 step=53399 	 total_loss= 6.589,itm_loss=0.3155,mlm_loss= 1.697,itc_loss= 4.577
+2022-07-30 04:17:07 - INFO - Epoch=4/8 	 step=53499 	 total_loss= 6.588,itm_loss=0.3154,mlm_loss= 1.696,itc_loss= 4.576
+2022-07-30 04:18:36 - INFO - Epoch=4/8 	 step=53599 	 total_loss= 6.586,itm_loss=0.3152,mlm_loss= 1.696,itc_loss= 4.575
+2022-07-30 04:20:06 - INFO - Epoch=4/8 	 step=53699 	 total_loss= 6.585,itm_loss=0.3149,mlm_loss= 1.696,itc_loss= 4.574
+2022-07-30 04:21:36 - INFO - Epoch=4/8 	 step=53799 	 total_loss= 6.584,itm_loss=0.3147,mlm_loss= 1.696,itc_loss= 4.573
+2022-07-30 04:23:06 - INFO - Epoch=4/8 	 step=53899 	 total_loss= 6.583,itm_loss=0.3146,mlm_loss= 1.696,itc_loss= 4.572
+2022-07-30 04:24:35 - INFO - Epoch=4/8 	 step=53999 	 total_loss= 6.582,itm_loss=0.3145,mlm_loss= 1.696,itc_loss= 4.571
+2022-07-30 04:26:05 - INFO - Epoch=4/8 	 step=54099 	 total_loss=  6.58,itm_loss=0.3144,mlm_loss= 1.696,itc_loss=  4.57
+2022-07-30 04:27:35 - INFO - Epoch=4/8 	 step=54199 	 total_loss=  6.58,itm_loss=0.3143,mlm_loss= 1.696,itc_loss=  4.57
+2022-07-30 04:29:04 - INFO - Epoch=4/8 	 step=54299 	 total_loss= 6.579,itm_loss=0.3142,mlm_loss= 1.696,itc_loss= 4.569
+2022-07-30 04:30:34 - INFO - Epoch=4/8 	 step=54399 	 total_loss= 6.578,itm_loss= 0.314,mlm_loss= 1.696,itc_loss= 4.568
+2022-07-30 04:32:04 - INFO - Epoch=4/8 	 step=54499 	 total_loss= 6.577,itm_loss=0.3139,mlm_loss= 1.696,itc_loss= 4.568
+2022-07-30 04:33:33 - INFO - Epoch=4/8 	 step=54599 	 total_loss= 6.576,itm_loss=0.3138,mlm_loss= 1.696,itc_loss= 4.567
+2022-07-30 04:35:03 - INFO - Epoch=4/8 	 step=54699 	 total_loss= 6.575,itm_loss=0.3136,mlm_loss= 1.696,itc_loss= 4.566
+2022-07-30 04:36:33 - INFO - Epoch=4/8 	 step=54799 	 total_loss= 6.574,itm_loss=0.3135,mlm_loss= 1.695,itc_loss= 4.565
+2022-07-30 04:38:03 - INFO - Epoch=4/8 	 step=54899 	 total_loss= 6.572,itm_loss=0.3133,mlm_loss= 1.695,itc_loss= 4.564
+2022-07-30 04:39:32 - INFO - Epoch=4/8 	 step=54999 	 total_loss= 6.571,itm_loss=0.3132,mlm_loss= 1.695,itc_loss= 4.562
+2022-07-30 05:03:13 - INFO - Epoch=5/8 	 step=55099 	 total_loss= 6.393,itm_loss=0.2892,mlm_loss= 1.658,itc_loss= 4.445
+2022-07-30 05:04:43 - INFO - Epoch=5/8 	 step=55199 	 total_loss= 6.387,itm_loss=0.2915,mlm_loss= 1.654,itc_loss= 4.442
+2022-07-30 05:06:12 - INFO - Epoch=5/8 	 step=55299 	 total_loss= 6.387,itm_loss=0.2931,mlm_loss= 1.665,itc_loss= 4.429
+2022-07-30 05:07:42 - INFO - Epoch=5/8 	 step=55399 	 total_loss= 6.368,itm_loss=0.2892,mlm_loss=  1.67,itc_loss= 4.409
+2022-07-30 05:09:12 - INFO - Epoch=5/8 	 step=55499 	 total_loss= 6.371,itm_loss=0.2901,mlm_loss= 1.673,itc_loss= 4.408
+2022-07-30 05:10:42 - INFO - Epoch=5/8 	 step=55599 	 total_loss= 6.387,itm_loss=0.2901,mlm_loss= 1.675,itc_loss= 4.421
+2022-07-30 05:12:12 - INFO - Epoch=5/8 	 step=55699 	 total_loss= 6.385,itm_loss=0.2889,mlm_loss= 1.679,itc_loss= 4.417
+2022-07-30 05:13:41 - INFO - Epoch=5/8 	 step=55799 	 total_loss= 6.375,itm_loss=0.2879,mlm_loss= 1.677,itc_loss= 4.411
+2022-07-30 05:15:11 - INFO - Epoch=5/8 	 step=55899 	 total_loss= 6.375,itm_loss=0.2875,mlm_loss= 1.677,itc_loss=  4.41
+2022-07-30 05:16:41 - INFO - Epoch=5/8 	 step=55999 	 total_loss= 6.372,itm_loss=0.2879,mlm_loss= 1.677,itc_loss= 4.407
+2022-07-30 05:18:11 - INFO - Epoch=5/8 	 step=56099 	 total_loss=  6.37,itm_loss= 0.288,mlm_loss= 1.676,itc_loss= 4.405
+2022-07-30 05:19:41 - INFO - Epoch=5/8 	 step=56199 	 total_loss= 6.368,itm_loss=0.2875,mlm_loss= 1.676,itc_loss= 4.405
+2022-07-30 05:21:10 - INFO - Epoch=5/8 	 step=56299 	 total_loss= 6.366,itm_loss=0.2877,mlm_loss= 1.675,itc_loss= 4.404
+2022-07-30 05:22:40 - INFO - Epoch=5/8 	 step=56399 	 total_loss= 6.367,itm_loss=0.2871,mlm_loss= 1.675,itc_loss= 4.405
+2022-07-30 05:24:10 - INFO - Epoch=5/8 	 step=56499 	 total_loss= 6.372,itm_loss=0.2874,mlm_loss= 1.676,itc_loss= 4.409
+2022-07-30 05:25:40 - INFO - Epoch=5/8 	 step=56599 	 total_loss= 6.369,itm_loss=0.2867,mlm_loss= 1.675,itc_loss= 4.407
+2022-07-30 05:27:10 - INFO - Epoch=5/8 	 step=56699 	 total_loss= 6.367,itm_loss=0.2859,mlm_loss= 1.676,itc_loss= 4.405
+2022-07-30 05:28:39 - INFO - Epoch=5/8 	 step=56799 	 total_loss= 6.364,itm_loss=0.2855,mlm_loss= 1.677,itc_loss= 4.402
+2022-07-30 05:30:09 - INFO - Epoch=5/8 	 step=56899 	 total_loss= 6.366,itm_loss=0.2854,mlm_loss= 1.677,itc_loss= 4.403
+2022-07-30 05:31:39 - INFO - Epoch=5/8 	 step=56999 	 total_loss= 6.364,itm_loss=0.2852,mlm_loss= 1.676,itc_loss= 4.403
+2022-07-30 05:33:09 - INFO - Epoch=5/8 	 step=57099 	 total_loss= 6.367,itm_loss=0.2853,mlm_loss= 1.676,itc_loss= 4.406
+2022-07-30 05:34:38 - INFO - Epoch=5/8 	 step=57199 	 total_loss= 6.367,itm_loss=0.2853,mlm_loss= 1.677,itc_loss= 4.405
+2022-07-30 05:36:08 - INFO - Epoch=5/8 	 step=57299 	 total_loss= 6.368,itm_loss=0.2853,mlm_loss= 1.678,itc_loss= 4.405
+2022-07-30 05:37:38 - INFO - Epoch=5/8 	 step=57399 	 total_loss= 6.368,itm_loss=0.2857,mlm_loss= 1.678,itc_loss= 4.404
+2022-07-30 05:39:08 - INFO - Epoch=5/8 	 step=57499 	 total_loss= 6.369,itm_loss=0.2857,mlm_loss= 1.678,itc_loss= 4.405
+2022-07-30 05:40:38 - INFO - Epoch=5/8 	 step=57599 	 total_loss= 6.369,itm_loss=0.2855,mlm_loss= 1.678,itc_loss= 4.405
+2022-07-30 05:42:07 - INFO - Epoch=5/8 	 step=57699 	 total_loss= 6.369,itm_loss=0.2852,mlm_loss= 1.678,itc_loss= 4.406
+2022-07-30 05:43:37 - INFO - Epoch=5/8 	 step=57799 	 total_loss= 6.369,itm_loss=0.2852,mlm_loss= 1.679,itc_loss= 4.405
+2022-07-30 05:45:07 - INFO - Epoch=5/8 	 step=57899 	 total_loss=  6.37,itm_loss=0.2851,mlm_loss= 1.679,itc_loss= 4.406
+2022-07-30 05:46:36 - INFO - Epoch=5/8 	 step=57999 	 total_loss=  6.37,itm_loss= 0.285,mlm_loss= 1.679,itc_loss= 4.406
+2022-07-30 05:48:06 - INFO - Epoch=5/8 	 step=58099 	 total_loss= 6.369,itm_loss=0.2849,mlm_loss= 1.679,itc_loss= 4.405
+2022-07-30 05:49:36 - INFO - Epoch=5/8 	 step=58199 	 total_loss= 6.368,itm_loss=0.2848,mlm_loss=  1.68,itc_loss= 4.403
+2022-07-30 05:51:06 - INFO - Epoch=5/8 	 step=58299 	 total_loss= 6.366,itm_loss=0.2846,mlm_loss= 1.679,itc_loss= 4.402
+2022-07-30 05:52:36 - INFO - Epoch=5/8 	 step=58399 	 total_loss= 6.363,itm_loss=0.2843,mlm_loss=  1.68,itc_loss= 4.399
+2022-07-30 05:54:05 - INFO - Epoch=5/8 	 step=58499 	 total_loss= 6.363,itm_loss= 0.284,mlm_loss=  1.68,itc_loss= 4.399
+2022-07-30 05:55:35 - INFO - Epoch=5/8 	 step=58599 	 total_loss= 6.361,itm_loss=0.2838,mlm_loss=  1.68,itc_loss= 4.396
+2022-07-30 05:57:05 - INFO - Epoch=5/8 	 step=58699 	 total_loss=  6.36,itm_loss=0.2839,mlm_loss=  1.68,itc_loss= 4.395
+2022-07-30 05:58:35 - INFO - Epoch=5/8 	 step=58799 	 total_loss= 6.358,itm_loss=0.2837,mlm_loss= 1.681,itc_loss= 4.394
+2022-07-30 06:00:04 - INFO - Epoch=5/8 	 step=58899 	 total_loss= 6.358,itm_loss=0.2836,mlm_loss=  1.68,itc_loss= 4.394
+2022-07-30 06:01:34 - INFO - Epoch=5/8 	 step=58999 	 total_loss= 6.356,itm_loss=0.2833,mlm_loss=  1.68,itc_loss= 4.392
+2022-07-30 06:03:04 - INFO - Epoch=5/8 	 step=59099 	 total_loss= 6.354,itm_loss=0.2828,mlm_loss=  1.68,itc_loss= 4.391
+2022-07-30 06:04:34 - INFO - Epoch=5/8 	 step=59199 	 total_loss= 6.353,itm_loss=0.2829,mlm_loss=  1.68,itc_loss=  4.39
+2022-07-30 06:06:04 - INFO - Epoch=5/8 	 step=59299 	 total_loss= 6.352,itm_loss=0.2827,mlm_loss=  1.68,itc_loss= 4.389
+2022-07-30 06:07:33 - INFO - Epoch=5/8 	 step=59399 	 total_loss= 6.353,itm_loss= 0.283,mlm_loss= 1.679,itc_loss= 4.391
+2022-07-30 06:09:03 - INFO - Epoch=5/8 	 step=59499 	 total_loss= 6.353,itm_loss= 0.283,mlm_loss=  1.68,itc_loss=  4.39
+2022-07-30 06:10:33 - INFO - Epoch=5/8 	 step=59599 	 total_loss= 6.354,itm_loss=0.2829,mlm_loss= 1.681,itc_loss=  4.39
+2022-07-30 06:12:02 - INFO - Epoch=5/8 	 step=59699 	 total_loss= 6.353,itm_loss=0.2827,mlm_loss= 1.681,itc_loss=  4.39
+2022-07-30 06:13:32 - INFO - Epoch=5/8 	 step=59799 	 total_loss= 6.353,itm_loss=0.2826,mlm_loss= 1.681,itc_loss=  4.39
+2022-07-30 06:15:02 - INFO - Epoch=5/8 	 step=59899 	 total_loss= 6.354,itm_loss=0.2824,mlm_loss= 1.681,itc_loss=  4.39
+2022-07-30 06:16:32 - INFO - Epoch=5/8 	 step=59999 	 total_loss= 6.353,itm_loss=0.2821,mlm_loss= 1.681,itc_loss=  4.39
+2022-07-30 06:18:02 - INFO - Epoch=5/8 	 step=60099 	 total_loss= 6.351,itm_loss=0.2822,mlm_loss= 1.681,itc_loss= 4.389
+2022-07-30 06:19:31 - INFO - Epoch=5/8 	 step=60199 	 total_loss= 6.349,itm_loss= 0.282,mlm_loss= 1.681,itc_loss= 4.386
+2022-07-30 06:21:01 - INFO - Epoch=5/8 	 step=60299 	 total_loss= 6.349,itm_loss=0.2818,mlm_loss= 1.681,itc_loss= 4.386
+2022-07-30 06:22:31 - INFO - Epoch=5/8 	 step=60399 	 total_loss= 6.348,itm_loss=0.2815,mlm_loss= 1.681,itc_loss= 4.385
+2022-07-30 06:24:01 - INFO - Epoch=5/8 	 step=60499 	 total_loss= 6.345,itm_loss=0.2813,mlm_loss= 1.681,itc_loss= 4.383
+2022-07-30 06:25:30 - INFO - Epoch=5/8 	 step=60599 	 total_loss= 6.344,itm_loss=0.2811,mlm_loss= 1.681,itc_loss= 4.382
+2022-07-30 06:27:00 - INFO - Epoch=5/8 	 step=60699 	 total_loss= 6.343,itm_loss=0.2808,mlm_loss= 1.681,itc_loss= 4.381
+2022-07-30 06:28:30 - INFO - Epoch=5/8 	 step=60799 	 total_loss= 6.341,itm_loss=0.2806,mlm_loss= 1.681,itc_loss=  4.38
+2022-07-30 06:30:00 - INFO - Epoch=5/8 	 step=60899 	 total_loss=  6.34,itm_loss=0.2804,mlm_loss= 1.681,itc_loss= 4.379
+2022-07-30 06:31:30 - INFO - Epoch=5/8 	 step=60999 	 total_loss= 6.342,itm_loss=0.2805,mlm_loss= 1.681,itc_loss=  4.38
+2022-07-30 06:32:59 - INFO - Epoch=5/8 	 step=61099 	 total_loss= 6.341,itm_loss=0.2803,mlm_loss= 1.681,itc_loss=  4.38
+2022-07-30 06:34:29 - INFO - Epoch=5/8 	 step=61199 	 total_loss=  6.34,itm_loss=0.2803,mlm_loss= 1.681,itc_loss= 4.379
+2022-07-30 06:35:59 - INFO - Epoch=5/8 	 step=61299 	 total_loss=  6.34,itm_loss=0.2803,mlm_loss= 1.681,itc_loss= 4.379
+2022-07-30 06:37:29 - INFO - Epoch=5/8 	 step=61399 	 total_loss=  6.34,itm_loss=0.2802,mlm_loss= 1.681,itc_loss= 4.379
+2022-07-30 06:38:58 - INFO - Epoch=5/8 	 step=61499 	 total_loss= 6.339,itm_loss=0.2801,mlm_loss=  1.68,itc_loss= 4.378
+2022-07-30 06:40:28 - INFO - Epoch=5/8 	 step=61599 	 total_loss= 6.337,itm_loss=  0.28,mlm_loss=  1.68,itc_loss= 4.377
+2022-07-30 06:41:58 - INFO - Epoch=5/8 	 step=61699 	 total_loss= 6.336,itm_loss=0.2799,mlm_loss=  1.68,itc_loss= 4.376
+2022-07-30 06:43:28 - INFO - Epoch=5/8 	 step=61799 	 total_loss= 6.335,itm_loss=0.2799,mlm_loss=  1.68,itc_loss= 4.375
+2022-07-30 06:44:58 - INFO - Epoch=5/8 	 step=61899 	 total_loss= 6.334,itm_loss=0.2797,mlm_loss=  1.68,itc_loss= 4.374
+2022-07-30 06:46:27 - INFO - Epoch=5/8 	 step=61999 	 total_loss= 6.332,itm_loss=0.2795,mlm_loss=  1.68,itc_loss= 4.373
+2022-07-30 06:47:57 - INFO - Epoch=5/8 	 step=62099 	 total_loss= 6.331,itm_loss=0.2793,mlm_loss=  1.68,itc_loss= 4.372
+2022-07-30 06:49:27 - INFO - Epoch=5/8 	 step=62199 	 total_loss=  6.33,itm_loss= 0.279,mlm_loss=  1.68,itc_loss= 4.371
+2022-07-30 06:50:57 - INFO - Epoch=5/8 	 step=62299 	 total_loss= 6.329,itm_loss=0.2788,mlm_loss=  1.68,itc_loss= 4.371
+2022-07-30 06:52:26 - INFO - Epoch=5/8 	 step=62399 	 total_loss= 6.328,itm_loss=0.2786,mlm_loss=  1.68,itc_loss=  4.37
+2022-07-30 06:53:56 - INFO - Epoch=5/8 	 step=62499 	 total_loss= 6.329,itm_loss=0.2785,mlm_loss= 1.679,itc_loss= 4.371
+2022-07-30 06:55:26 - INFO - Epoch=5/8 	 step=62599 	 total_loss= 6.328,itm_loss=0.2784,mlm_loss= 1.679,itc_loss=  4.37
+2022-07-30 06:56:56 - INFO - Epoch=5/8 	 step=62699 	 total_loss= 6.327,itm_loss=0.2783,mlm_loss= 1.679,itc_loss= 4.369
+2022-07-30 06:58:26 - INFO - Epoch=5/8 	 step=62799 	 total_loss= 6.325,itm_loss=0.2781,mlm_loss=  1.68,itc_loss= 4.367
+2022-07-30 06:59:55 - INFO - Epoch=5/8 	 step=62899 	 total_loss= 6.324,itm_loss=0.2779,mlm_loss= 1.679,itc_loss= 4.367
+2022-07-30 07:01:25 - INFO - Epoch=5/8 	 step=62999 	 total_loss= 6.323,itm_loss=0.2779,mlm_loss= 1.679,itc_loss= 4.366
+2022-07-30 07:02:55 - INFO - Epoch=5/8 	 step=63099 	 total_loss= 6.322,itm_loss=0.2777,mlm_loss= 1.679,itc_loss= 4.365
+2022-07-30 07:04:25 - INFO - Epoch=5/8 	 step=63199 	 total_loss= 6.321,itm_loss=0.2775,mlm_loss= 1.679,itc_loss= 4.364
+2022-07-30 07:05:54 - INFO - Epoch=5/8 	 step=63299 	 total_loss=  6.32,itm_loss=0.2774,mlm_loss= 1.679,itc_loss= 4.363
+2022-07-30 07:07:24 - INFO - Epoch=5/8 	 step=63399 	 total_loss= 6.319,itm_loss=0.2773,mlm_loss= 1.679,itc_loss= 4.363
+2022-07-30 07:08:54 - INFO - Epoch=5/8 	 step=63499 	 total_loss= 6.318,itm_loss=0.2771,mlm_loss= 1.679,itc_loss= 4.362
+2022-07-30 07:10:24 - INFO - Epoch=5/8 	 step=63599 	 total_loss= 6.317,itm_loss=0.2769,mlm_loss= 1.679,itc_loss= 4.361
+2022-07-30 07:11:54 - INFO - Epoch=5/8 	 step=63699 	 total_loss= 6.316,itm_loss=0.2767,mlm_loss= 1.679,itc_loss=  4.36
+2022-07-30 07:13:23 - INFO - Epoch=5/8 	 step=63799 	 total_loss= 6.314,itm_loss=0.2765,mlm_loss= 1.679,itc_loss= 4.359
+2022-07-30 07:14:53 - INFO - Epoch=5/8 	 step=63899 	 total_loss= 6.312,itm_loss=0.2762,mlm_loss= 1.679,itc_loss= 4.357
+2022-07-30 07:16:23 - INFO - Epoch=5/8 	 step=63999 	 total_loss= 6.311,itm_loss=0.2761,mlm_loss= 1.679,itc_loss= 4.357
+2022-07-30 07:17:53 - INFO - Epoch=5/8 	 step=64099 	 total_loss= 6.311,itm_loss=0.2759,mlm_loss= 1.679,itc_loss= 4.356
+2022-07-30 07:19:22 - INFO - Epoch=5/8 	 step=64199 	 total_loss=  6.31,itm_loss=0.2758,mlm_loss= 1.679,itc_loss= 4.355
+2022-07-30 07:20:52 - INFO - Epoch=5/8 	 step=64299 	 total_loss=  6.31,itm_loss=0.2757,mlm_loss= 1.679,itc_loss= 4.355
+2022-07-30 07:22:22 - INFO - Epoch=5/8 	 step=64399 	 total_loss= 6.309,itm_loss=0.2756,mlm_loss= 1.679,itc_loss= 4.354
+2022-07-30 07:23:52 - INFO - Epoch=5/8 	 step=64499 	 total_loss= 6.307,itm_loss=0.2755,mlm_loss= 1.679,itc_loss= 4.353
+2022-07-30 07:25:22 - INFO - Epoch=5/8 	 step=64599 	 total_loss= 6.305,itm_loss=0.2754,mlm_loss= 1.678,itc_loss= 4.352
+2022-07-30 07:26:51 - INFO - Epoch=5/8 	 step=64699 	 total_loss= 6.304,itm_loss=0.2752,mlm_loss= 1.678,itc_loss=  4.35
+2022-07-30 07:28:21 - INFO - Epoch=5/8 	 step=64799 	 total_loss= 6.303,itm_loss= 0.275,mlm_loss= 1.678,itc_loss=  4.35
+2022-07-30 07:29:51 - INFO - Epoch=5/8 	 step=64899 	 total_loss= 6.302,itm_loss=0.2749,mlm_loss= 1.678,itc_loss= 4.349
+2022-07-30 07:31:21 - INFO - Epoch=5/8 	 step=64999 	 total_loss= 6.302,itm_loss=0.2748,mlm_loss= 1.678,itc_loss= 4.348
+2022-07-30 07:32:51 - INFO - Epoch=5/8 	 step=65099 	 total_loss= 6.301,itm_loss=0.2747,mlm_loss= 1.678,itc_loss= 4.348
+2022-07-30 07:34:21 - INFO - Epoch=5/8 	 step=65199 	 total_loss=   6.3,itm_loss=0.2745,mlm_loss= 1.678,itc_loss= 4.347
+2022-07-30 07:35:50 - INFO - Epoch=5/8 	 step=65299 	 total_loss= 6.299,itm_loss=0.2743,mlm_loss= 1.678,itc_loss= 4.347
+2022-07-30 07:37:20 - INFO - Epoch=5/8 	 step=65399 	 total_loss= 6.297,itm_loss= 0.274,mlm_loss= 1.678,itc_loss= 4.346
+2022-07-30 07:38:50 - INFO - Epoch=5/8 	 step=65499 	 total_loss= 6.296,itm_loss=0.2739,mlm_loss= 1.677,itc_loss= 4.345
+2022-07-30 07:40:20 - INFO - Epoch=5/8 	 step=65599 	 total_loss= 6.295,itm_loss=0.2738,mlm_loss= 1.677,itc_loss= 4.344
+2022-07-30 07:41:50 - INFO - Epoch=5/8 	 step=65699 	 total_loss= 6.293,itm_loss=0.2735,mlm_loss= 1.677,itc_loss= 4.343
+2022-07-30 07:43:20 - INFO - Epoch=5/8 	 step=65799 	 total_loss= 6.291,itm_loss=0.2733,mlm_loss= 1.677,itc_loss= 4.341
+2022-07-30 07:44:50 - INFO - Epoch=5/8 	 step=65899 	 total_loss= 6.291,itm_loss=0.2733,mlm_loss= 1.677,itc_loss= 4.341
+2022-07-30 07:46:19 - INFO - Epoch=5/8 	 step=65999 	 total_loss=  6.29,itm_loss= 0.273,mlm_loss= 1.677,itc_loss=  4.34
+2022-07-30 07:47:49 - INFO - Epoch=5/8 	 step=66099 	 total_loss= 6.289,itm_loss= 0.273,mlm_loss= 1.677,itc_loss= 4.339
+2022-07-30 07:49:19 - INFO - Epoch=5/8 	 step=66199 	 total_loss= 6.288,itm_loss=0.2728,mlm_loss= 1.677,itc_loss= 4.338
+2022-07-30 07:50:49 - INFO - Epoch=5/8 	 step=66299 	 total_loss= 6.288,itm_loss=0.2726,mlm_loss= 1.677,itc_loss= 4.338
+2022-07-30 07:52:19 - INFO - Epoch=5/8 	 step=66399 	 total_loss= 6.286,itm_loss=0.2725,mlm_loss= 1.677,itc_loss= 4.337
+2022-07-30 07:53:48 - INFO - Epoch=5/8 	 step=66499 	 total_loss= 6.286,itm_loss=0.2724,mlm_loss= 1.677,itc_loss= 4.336
+2022-07-30 07:55:18 - INFO - Epoch=5/8 	 step=66599 	 total_loss= 6.285,itm_loss=0.2722,mlm_loss= 1.677,itc_loss= 4.335
+2022-07-30 07:56:48 - INFO - Epoch=5/8 	 step=66699 	 total_loss= 6.284,itm_loss=0.2722,mlm_loss= 1.677,itc_loss= 4.335
+2022-07-30 07:58:18 - INFO - Epoch=5/8 	 step=66799 	 total_loss= 6.282,itm_loss= 0.272,mlm_loss= 1.677,itc_loss= 4.333
+2022-07-30 07:59:48 - INFO - Epoch=5/8 	 step=66899 	 total_loss= 6.281,itm_loss=0.2719,mlm_loss= 1.677,itc_loss= 4.332
+2022-07-30 08:01:17 - INFO - Epoch=5/8 	 step=66999 	 total_loss=  6.28,itm_loss=0.2717,mlm_loss= 1.677,itc_loss= 4.331
+2022-07-30 08:02:47 - INFO - Epoch=5/8 	 step=67099 	 total_loss= 6.278,itm_loss=0.2716,mlm_loss= 1.677,itc_loss=  4.33
+2022-07-30 08:04:17 - INFO - Epoch=5/8 	 step=67199 	 total_loss= 6.277,itm_loss=0.2714,mlm_loss= 1.677,itc_loss= 4.329
+2022-07-30 08:05:47 - INFO - Epoch=5/8 	 step=67299 	 total_loss= 6.276,itm_loss=0.2713,mlm_loss= 1.677,itc_loss= 4.328
+2022-07-30 08:07:17 - INFO - Epoch=5/8 	 step=67399 	 total_loss= 6.275,itm_loss=0.2711,mlm_loss= 1.677,itc_loss= 4.327
+2022-07-30 08:08:47 - INFO - Epoch=5/8 	 step=67499 	 total_loss= 6.274,itm_loss=0.2709,mlm_loss= 1.677,itc_loss= 4.326
+2022-07-30 08:10:16 - INFO - Epoch=5/8 	 step=67599 	 total_loss= 6.273,itm_loss=0.2707,mlm_loss= 1.677,itc_loss= 4.326
+2022-07-30 08:11:46 - INFO - Epoch=5/8 	 step=67699 	 total_loss= 6.272,itm_loss=0.2706,mlm_loss= 1.676,itc_loss= 4.325
+2022-07-30 08:13:16 - INFO - Epoch=5/8 	 step=67799 	 total_loss= 6.271,itm_loss=0.2705,mlm_loss= 1.676,itc_loss= 4.324
+2022-07-30 08:14:46 - INFO - Epoch=5/8 	 step=67899 	 total_loss=  6.27,itm_loss=0.2703,mlm_loss= 1.676,itc_loss= 4.323
+2022-07-30 08:16:16 - INFO - Epoch=5/8 	 step=67999 	 total_loss= 6.269,itm_loss=0.2703,mlm_loss= 1.676,itc_loss= 4.323
+2022-07-30 08:17:46 - INFO - Epoch=5/8 	 step=68099 	 total_loss= 6.269,itm_loss=0.2702,mlm_loss= 1.676,itc_loss= 4.323
+2022-07-30 08:19:16 - INFO - Epoch=5/8 	 step=68199 	 total_loss= 6.268,itm_loss=  0.27,mlm_loss= 1.676,itc_loss= 4.322
+2022-07-30 08:20:46 - INFO - Epoch=5/8 	 step=68299 	 total_loss= 6.267,itm_loss=0.2699,mlm_loss= 1.676,itc_loss= 4.321
+2022-07-30 08:22:15 - INFO - Epoch=5/8 	 step=68399 	 total_loss= 6.266,itm_loss=0.2698,mlm_loss= 1.676,itc_loss=  4.32
+2022-07-30 08:23:45 - INFO - Epoch=5/8 	 step=68499 	 total_loss= 6.265,itm_loss=0.2696,mlm_loss= 1.676,itc_loss= 4.319
+2022-07-30 08:25:15 - INFO - Epoch=5/8 	 step=68599 	 total_loss= 6.264,itm_loss=0.2695,mlm_loss= 1.676,itc_loss= 4.319
+2022-07-30 08:26:45 - INFO - Epoch=5/8 	 step=68699 	 total_loss= 6.262,itm_loss=0.2693,mlm_loss= 1.676,itc_loss= 4.318
+2022-07-30 08:28:46 - INFO - Epoch=6/8 	 step=68799 	 total_loss= 6.087,itm_loss=0.2412,mlm_loss= 1.625,itc_loss= 4.221
+2022-07-30 08:30:16 - INFO - Epoch=6/8 	 step=68899 	 total_loss= 6.087,itm_loss=0.2494,mlm_loss=  1.65,itc_loss= 4.188
+2022-07-30 08:31:45 - INFO - Epoch=6/8 	 step=68999 	 total_loss= 6.095,itm_loss=0.2515,mlm_loss= 1.652,itc_loss= 4.191
+2022-07-30 08:33:15 - INFO - Epoch=6/8 	 step=69099 	 total_loss= 6.076,itm_loss=0.2459,mlm_loss=  1.66,itc_loss=  4.17
+2022-07-30 08:34:45 - INFO - Epoch=6/8 	 step=69199 	 total_loss= 6.086,itm_loss=0.2452,mlm_loss= 1.664,itc_loss= 4.177
+2022-07-30 08:36:15 - INFO - Epoch=6/8 	 step=69299 	 total_loss= 6.098,itm_loss=0.2465,mlm_loss= 1.667,itc_loss= 4.184
+2022-07-30 08:37:45 - INFO - Epoch=6/8 	 step=69399 	 total_loss= 6.105,itm_loss=0.2455,mlm_loss= 1.668,itc_loss= 4.192
+2022-07-30 08:39:15 - INFO - Epoch=6/8 	 step=69499 	 total_loss= 6.105,itm_loss=0.2457,mlm_loss= 1.668,itc_loss= 4.191
+2022-07-30 08:40:44 - INFO - Epoch=6/8 	 step=69599 	 total_loss= 6.099,itm_loss=0.2455,mlm_loss= 1.667,itc_loss= 4.187
+2022-07-30 08:42:14 - INFO - Epoch=6/8 	 step=69699 	 total_loss= 6.095,itm_loss=0.2447,mlm_loss= 1.667,itc_loss= 4.184
+2022-07-30 08:43:44 - INFO - Epoch=6/8 	 step=69799 	 total_loss= 6.093,itm_loss=0.2447,mlm_loss= 1.666,itc_loss= 4.182

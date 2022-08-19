@@ -1,0 +1,8 @@
+coscmd
+numpy
+pandas
+sklearn
+tqdm
+timm
+transformers
+einops

@@ -20,7 +20,7 @@
    2 分别执行single_1 single_2 double_2的预训练任务
    3 开始微调，在对应finetune文件夹下，运行微调程序
 
-## 测试流程
+## 推理流程
     1 在ensamble文件夹下使用single1下的特征抽取程序，对测试集图像进行抽帧和特征提取
     2 分别执行single_1 single_2 double_2的推理任务
     3 在enamble.py程序下将3个模型产生的logits矩阵进行简单的平均融合，即可生成最终的预测结果

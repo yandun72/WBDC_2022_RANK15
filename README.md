@@ -16,7 +16,7 @@
    微调的时候，简单采用ema、fgm提升模型的泛化性，没有采用其他复杂思路去处理。
 ## 训练流程
     1 使用clip的视觉编码器对10w和100w图像数据进行抽帧和特征提取
-    2 分别执行single_1 single_2 double_2的预训练任务
+    2 分别执行src/pretrain下的single_1 single_2 double_2的预训练任务
     3 开始微调，在对应finetune文件夹下，运行微调程序
     运行train.sh,一键执行训练集的抽帧、预训练及微调
 ## 推理流程

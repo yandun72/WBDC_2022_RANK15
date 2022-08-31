@@ -6,8 +6,11 @@
   使用大赛提供的有标注数据（10万）
   使用无标注数据。
 ## 预训练模型
-  使用了 huggingface 上提供的 hfl/chinese-macbert-base 模型。链接为： https://huggingface.co/hfl/chinese-macbert-base
-  使用了OpenAI开源的clip模型，链接是：https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt
+  使用了 huggingface 上提供的 hfl/chinese-macbert-base 模型
+  链接： https://huggingface.co/hfl/chinese-macbert-base
+  
+  使用了OpenAI开源的clip模型
+  链接：https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt
 
 ## 算法描述
    最终的模型是由13帧的两个不同的单流预训练和一个双流预训练简单平均融合得到

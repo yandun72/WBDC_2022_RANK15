@@ -7,6 +7,7 @@
   使用无标注数据。
 ## 预训练模型
   使用了 huggingface 上提供的 hfl/chinese-macbert-base 模型
+  
   链接： https://huggingface.co/hfl/chinese-macbert-base
   
   使用了OpenAI开源的clip模型

@@ -11,6 +11,7 @@
   链接： https://huggingface.co/hfl/chinese-macbert-base
   
   使用了OpenAI开源的clip模型
+  
   链接：https://openaipublic.azureedge.net/clip/models/5806e77cd80f8b59890b7e101eabd078d9fb84e6937f9e85e4ecb61988df416f/ViT-B-16.pt
 
 ## 算法描述

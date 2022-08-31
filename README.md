@@ -1,6 +1,7 @@
 # 代码说明
 2022微信大数据技术挑战赛复赛top16
-https://algo.weixin.qq.com/problem-description
+
+链接:https://algo.weixin.qq.com/problem-description
 ## 数据
   使用大赛提供的有标注数据（10万）
   使用无标注数据。

@@ -3,8 +3,9 @@
 
 链接:https://algo.weixin.qq.com
 ## 数据
-  使用大赛提供的有标注数据（10万）
-  使用无标注数据。
+  有标注数据 （10万）
+  
+  无标注数据 （100万）。
 ## 预训练模型
   使用了 huggingface 上提供的 hfl/chinese-macbert-base 模型
   
